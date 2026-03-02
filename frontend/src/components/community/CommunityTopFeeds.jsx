@@ -71,7 +71,7 @@ function FeedRows({ posts, showPopularity = false, isLoading = false, categorySl
 
   if (isLoading) {
     return (
-      <div className="px-3 py-2 text-xs text-ink-400">
+      <div className="flex min-h-[230px] items-center px-4 py-3 text-xs text-ink-400">
         목록을 불러오는 중...
       </div>
     );
@@ -79,14 +79,14 @@ function FeedRows({ posts, showPopularity = false, isLoading = false, categorySl
 
   if (visiblePosts.length === 0) {
     return (
-      <div className="px-3 py-2 text-xs text-ink-400">
+      <div className="flex min-h-[230px] items-center px-4 py-3 text-xs text-ink-400">
         표시할 글이 없습니다.
       </div>
     );
   }
 
   return (
-    <ul className="px-2 py-2 space-y-1">
+    <ul className="px-2.5 py-2.5 space-y-1.5">
       {visiblePosts.map((post) => {
         const categorySlug = resolveCategorySlug(post, categorySlugById);
         const barColor = CATEGORY_BAR_COLOR[categorySlug] || CATEGORY_BAR_COLOR.default;
@@ -102,7 +102,7 @@ function FeedRows({ posts, showPopularity = false, isLoading = false, categorySl
           <li key={post.id}>
             <Link
               to={`/posts/${post.id}`}
-              className="group relative block rounded-lg border border-transparent px-3 py-2 pl-4 hover:bg-paper-50/90 hover:border-ink-100 transition-colors"
+              className="group relative block rounded-lg border border-transparent px-3 py-2.5 pl-4 hover:bg-paper-50/90 hover:border-ink-100 transition-colors"
             >
               <span
                 className="absolute left-1 top-2.5 bottom-2.5 w-[1.5px] rounded-full opacity-35 group-hover:opacity-80 transition-opacity"
@@ -139,8 +139,8 @@ function FeedRows({ posts, showPopularity = false, isLoading = false, categorySl
 
 function FeedPanel({ title, posts, isLoading, showPopularity = false, categorySlugById, moreLink }) {
   return (
-    <section className="card rounded-xl overflow-hidden min-h-[280px] flex flex-col">
-      <header className="px-3.5 py-2.5 border-b border-ink-100">
+    <section className="card rounded-xl overflow-hidden min-h-[312px] xl:min-h-[336px] flex flex-col">
+      <header className="px-4 py-3 border-b border-ink-100">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-[15px] font-semibold tracking-tight text-ink-900">{title}</h2>
           <Link

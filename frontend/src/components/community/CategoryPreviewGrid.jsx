@@ -72,7 +72,7 @@ function CategoryPreviewGrid({ categories, onSelectCategory }) {
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {previewCards.map(({ category, posts, isLoading }) => (
-            <section key={category.id} className="card rounded-xl px-3 py-2">
+            <section key={category.id} className="card rounded-xl px-3 py-2.5 min-h-[176px] flex flex-col">
               <header className="flex items-center justify-between gap-2 border-b border-ink-100 pb-1.5">
                 <div className="min-w-0">
                   <h3 className="truncate text-[14px] font-semibold tracking-tight text-ink-900">
@@ -88,11 +88,11 @@ function CategoryPreviewGrid({ categories, onSelectCategory }) {
                 </button>
               </header>
 
-              <div className="pt-1.5">
+              <div className="pt-2 flex-1">
                 {isLoading ? (
-                  <p className="text-[12px] text-ink-400">불러오는 중...</p>
+                  <p className="flex min-h-[96px] items-center text-[12px] text-ink-400">불러오는 중...</p>
                 ) : posts.length === 0 ? (
-                  <p className="text-[12px] text-ink-400">아직 글이 없습니다.</p>
+                  <p className="flex min-h-[96px] items-center text-[12px] text-ink-400">아직 글이 없습니다.</p>
                 ) : (
                   <ul className="space-y-1">
                     {posts.map((post) => {

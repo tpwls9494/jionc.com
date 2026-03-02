@@ -61,9 +61,13 @@ function Layout() {
     ? 'min-h-screen bg-paper-100 bg-[radial-gradient(1400px_520px_at_50%_-120px,rgba(229,231,235,0.55),rgba(250,250,250,0.94)_44%,rgba(243,244,246,0.78)_100%)]'
     : 'min-h-screen bg-paper-100 bg-noise';
 
+  const contentContainerClassName = isCommunityHub
+    ? 'max-w-6xl xl:max-w-[1240px] mx-auto px-6 lg:px-8'
+    : 'max-w-6xl mx-auto px-6 lg:px-8';
+
   const mainClassName = isCommunityHub
-    ? 'max-w-6xl xl:max-w-[1320px] mx-auto px-6 lg:px-8 py-8 animate-fade-in'
-    : 'max-w-6xl mx-auto px-6 lg:px-8 py-8 animate-fade-in';
+    ? `${contentContainerClassName} py-8 animate-fade-in`
+    : `${contentContainerClassName} py-8 animate-fade-in`;
 
   const { data: unreadCountData } = useQuery({
     queryKey: ['notifications-unread-count'],
@@ -253,7 +257,7 @@ function Layout() {
   return (
     <div className={shellClassName}>
       <nav className="sticky top-0 z-50 bg-paper-50/80 backdrop-blur-xl border-b border-subtle">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+        <div className={contentContainerClassName}>
           <div className="relative flex justify-between items-center h-16">
             <Link to="/community" className="group flex items-center gap-3 transition-opacity hover:opacity-80 z-10">
               <div className="w-8 h-8 bg-ink-950 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
@@ -453,7 +457,7 @@ function Layout() {
       </main>
 
       <footer className="border-t border-subtle mt-auto">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-5">
+        <div className={`${contentContainerClassName} py-5`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <p className="text-xs text-ink-400 tracking-wide">
               © {new Date().getFullYear()} Jion. All rights reserved.
