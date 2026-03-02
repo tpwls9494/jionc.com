@@ -1,33 +1,33 @@
 import { useEffect, useRef } from 'react';
 
 const DESKTOP_SETTINGS = {
-  density: 0.00011,
-  minPoints: 28,
-  maxPoints: 72,
-  linkDistance: 150,
-  speedScale: 1.25,
+  density: 0.000095,
+  minPoints: 24,
+  maxPoints: 60,
+  linkDistance: 138,
+  speedScale: 1.1,
   pixelRatioCap: 1.5,
-  frameInterval: 28,
+  frameInterval: 30,
 };
 
 const MOBILE_SETTINGS = {
-  density: 0.00007,
-  minPoints: 16,
-  maxPoints: 40,
-  linkDistance: 118,
-  speedScale: 1,
+  density: 0.000058,
+  minPoints: 14,
+  maxPoints: 34,
+  linkDistance: 106,
+  speedScale: 0.9,
   pixelRatioCap: 1.2,
-  frameInterval: 36,
+  frameInterval: 40,
 };
 
 const LOW_END_SETTINGS = {
-  density: 0.00004,
-  minPoints: 10,
-  maxPoints: 24,
-  linkDistance: 96,
-  speedScale: 0.7,
+  density: 0.000035,
+  minPoints: 9,
+  maxPoints: 20,
+  linkDistance: 90,
+  speedScale: 0.62,
   pixelRatioCap: 1,
-  frameInterval: 50,
+  frameInterval: 54,
 };
 
 function supportsReducedMotion() {
@@ -68,15 +68,15 @@ function getSettings() {
 
 function createPoint(width, height, speedScale) {
   const angle = Math.random() * Math.PI * 2;
-  const velocity = (Math.random() * 0.05 + 0.04) * speedScale;
+  const velocity = (Math.random() * 0.045 + 0.03) * speedScale;
 
   return {
     x: Math.random() * width,
     y: Math.random() * height,
     vx: Math.cos(angle) * velocity,
     vy: Math.sin(angle) * velocity,
-    radius: Math.random() * 1.2 + 0.9,
-    opacity: Math.random() * 0.08 + 0.09,
+    radius: Math.random() * 1.15 + 0.75,
+    opacity: Math.random() * 0.07 + 0.07,
   };
 }
 
@@ -197,12 +197,12 @@ function CommunityHeroConstellation() {
           if (distanceSq > maxDistanceSq) continue;
 
           const distance = Math.sqrt(distanceSq);
-          const alpha = (1 - distance / maxDistance) * 0.17;
+          const alpha = (1 - distance / maxDistance) * 0.14;
 
           ctx.beginPath();
           ctx.moveTo(from.x, from.y);
           ctx.lineTo(to.x, to.y);
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 0.85;
           ctx.strokeStyle = `rgba(107, 114, 128, ${alpha.toFixed(3)})`;
           ctx.stroke();
         }
