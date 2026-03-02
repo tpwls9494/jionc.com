@@ -399,6 +399,24 @@ function PostForm() {
     }
   }
 
+  const recruitDeadlineDate = recruitDeadlineAt ? recruitDeadlineAt.slice(0, 10) : ''
+  const recruitDeadlineTime = recruitDeadlineAt && recruitDeadlineAt.includes('T')
+    ? recruitDeadlineAt.slice(11, 16)
+    : ''
+
+  const handleRecruitDeadlineDateChange = (nextDate) => {
+    if (!nextDate) {
+      setRecruitDeadlineAt('')
+      return
+    }
+    setRecruitDeadlineAt(`${nextDate}T${recruitDeadlineTime || '23:59'}`)
+  }
+
+  const handleRecruitDeadlineTimeChange = (nextTime) => {
+    if (!recruitDeadlineDate || !nextTime) return
+    setRecruitDeadlineAt(`${recruitDeadlineDate}T${nextTime}`)
+  }
+
   const ensureEditorRange = () => {
     const editor = editorRef.current
     if (!editor) return null
@@ -1475,17 +1493,28 @@ function PostForm() {
               </div>
 
               <div>
-                <label htmlFor="recruit-deadline" className="block text-xs font-semibold text-ink-600 mb-1.5">
+                <label htmlFor="recruit-deadline-date" className="block text-xs font-semibold text-ink-600 mb-1.5">
                   모집 마감일 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  id="recruit-deadline"
-                  type="datetime-local"
-                  value={recruitDeadlineAt}
-                  onChange={(e) => setRecruitDeadlineAt(e.target.value)}
-                  className="input-field !py-2.5"
-                  required={postType === POST_TYPE_RECRUIT}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    id="recruit-deadline-date"
+                    type="date"
+                    value={recruitDeadlineDate}
+                    onChange={(e) => handleRecruitDeadlineDateChange(e.target.value)}
+                    className="input-field !py-2.5"
+                    required={postType === POST_TYPE_RECRUIT}
+                  />
+                  <input
+                    id="recruit-deadline-time"
+                    type="time"
+                    value={recruitDeadlineTime}
+                    onChange={(e) => handleRecruitDeadlineTimeChange(e.target.value)}
+                    className="input-field !py-2.5 disabled:bg-paper-200 disabled:text-ink-500 disabled:cursor-not-allowed"
+                    disabled={!recruitDeadlineDate}
+                    required={postType === POST_TYPE_RECRUIT}
+                  />
+                </div>
               </div>
             </div>
           )}
