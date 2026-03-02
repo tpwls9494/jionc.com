@@ -23,6 +23,7 @@ from app.schemas.comment import CommentCreate, CommentResponse
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
 from app.schemas.like import LikeCreate, LikeResponse
 from app.schemas.follow import (
+    BlockResponse,
     FollowResponse,
     FollowStatusResponse,
     FollowUserSummary,
@@ -87,6 +88,7 @@ __all__ = [
     "CategoryResponse",
     "LikeCreate",
     "LikeResponse",
+    "BlockResponse",
     "FollowResponse",
     "FollowStatusResponse",
     "FollowUserSummary",

@@ -1,11 +1,14 @@
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PostListPage from '../../components/community/PostListPage';
 import useAuthStore from '../../stores/authStore';
+import useCategoriesStore from '../../stores/categoriesStore';
 import { useSeo } from '../../utils/seo';
 
 function FollowingPostsPage() {
   const navigate = useNavigate();
   const token = useAuthStore((state) => state.token);
+  const { categories, fetchCategories } = useCategoriesStore();
 
   useSeo({
     title: '팔로잉 피드',
@@ -20,6 +23,17 @@ function FollowingPostsPage() {
   const emptyStateDescription = token
     ? '게시글 상세에서 작성자를 팔로우하면 여기에 글이 표시됩니다.'
     : '게시글 상세에서 작성자 옆 팔로우 버튼을 눌러보세요.';
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      if (a.order != null && b.order != null) return a.order - b.order;
+      return a.id - b.id;
+    });
+  }, [categories]);
 
   return (
     <div className="animate-fade-up">
@@ -52,6 +66,19 @@ function FollowingPostsPage() {
           >
             팔로잉
           </button>
+          {sortedCategories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => navigate(`/community/${category.slug}`)}
+              className={`inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors ${
+                category.slug === 'notice'
+                  ? 'bg-paper-100 text-ink-500 border-ink-200 hover:bg-paper-200'
+                  : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </section>
 

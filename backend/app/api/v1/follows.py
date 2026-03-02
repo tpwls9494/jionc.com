@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.user_follow import UserFollow
 from app.schemas.follow import (
+    BlockResponse,
     FollowResponse,
     FollowStatusResponse,
     FollowUserListResponse,
@@ -66,6 +67,12 @@ def follow_user(
             detail="자기 자신은 팔로우할 수 없습니다.",
         )
 
+    if crud_follow.is_blocked_between(db, current_user.id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="차단 관계에서는 팔로우할 수 없습니다.",
+        )
+
     existing_follow = crud_follow.get_follow(
         db,
         follower_id=current_user.id,
@@ -108,6 +115,98 @@ def unfollow_user(
         db,
         follower_id=current_user.id,
         following_id=user_id,
+    )
+    return None
+
+
+@router.delete("/users/{user_id}/follower", status_code=status.HTTP_204_NO_CONTENT)
+def remove_follower(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _get_user_or_404(db, user_id)
+
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="본인 계정은 삭제할 수 없습니다.",
+        )
+
+    crud_follow.remove_follower(
+        db,
+        user_id=current_user.id,
+        follower_id=user_id,
+    )
+    return None
+
+
+@router.post("/users/{user_id}/block", response_model=BlockResponse, status_code=status.HTTP_201_CREATED)
+def block_user(
+    user_id: int,
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _get_user_or_404(db, user_id)
+
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="자기 자신은 차단할 수 없습니다.",
+        )
+
+    existing_block = crud_follow.get_block(
+        db,
+        blocker_id=current_user.id,
+        blocked_id=user_id,
+    )
+    if existing_block:
+        # Keep block idempotent and clean up any stale follow links.
+        crud_follow.delete_follow_pair(db, current_user.id, user_id)
+        response.status_code = status.HTTP_200_OK
+        return existing_block
+
+    try:
+        return crud_follow.create_block(
+            db,
+            blocker_id=current_user.id,
+            blocked_id=user_id,
+        )
+    except IntegrityError:
+        db.rollback()
+        existing_block = crud_follow.get_block(
+            db,
+            blocker_id=current_user.id,
+            blocked_id=user_id,
+        )
+        if existing_block:
+            response.status_code = status.HTTP_200_OK
+            return existing_block
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="차단 처리에 실패했습니다.",
+        )
+
+
+@router.delete("/users/{user_id}/block", status_code=status.HTTP_204_NO_CONTENT)
+def unblock_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _get_user_or_404(db, user_id)
+
+    if current_user.id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="본인 계정은 차단 해제 대상이 아닙니다.",
+        )
+
+    crud_follow.delete_block(
+        db,
+        blocker_id=current_user.id,
+        blocked_id=user_id,
     )
     return None
 

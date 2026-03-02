@@ -1,5 +1,7 @@
+import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PostListPage from '../../components/community/PostListPage';
+import useCategoriesStore from '../../stores/categoriesStore';
 import { useSeo } from '../../utils/seo';
 
 const ALLOWED_WINDOWS = new Set(['24h', '7d', '30d']);
@@ -7,6 +9,7 @@ const ALLOWED_WINDOWS = new Set(['24h', '7d', '30d']);
 function CommunityPostsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { categories, fetchCategories } = useCategoriesStore();
 
   const rawSort = searchParams.get('sort');
   const rawWindow = searchParams.get('window');
@@ -25,6 +28,17 @@ function CommunityPostsPage() {
       : '커뮤니티 최신 게시글 목록',
     url: sort === 'hot' ? `/community/posts?sort=hot&window=${window}` : '/community/posts',
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      if (a.order != null && b.order != null) return a.order - b.order;
+      return a.id - b.id;
+    });
+  }, [categories]);
 
   return (
     <div className="animate-fade-up">
@@ -57,6 +71,19 @@ function CommunityPostsPage() {
           >
             팔로잉
           </button>
+          {sortedCategories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => navigate(`/community/${category.slug}`)}
+              className={`inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors ${
+                category.slug === 'notice'
+                  ? 'bg-paper-100 text-ink-500 border-ink-200 hover:bg-paper-200'
+                  : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </section>
 

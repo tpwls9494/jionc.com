@@ -31,3 +31,13 @@ class FollowUserListResponse(BaseModel):
     page: int
     page_size: int
     users: List[FollowUserSummary]
+
+
+class BlockResponse(BaseModel):
+    id: int
+    blocker_id: int
+    blocked_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

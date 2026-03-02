@@ -143,6 +143,9 @@ export const likesAPI = {
 export const followsAPI = {
   followUser: (userId) => api.post(`/follows/users/${userId}`),
   unfollowUser: (userId) => api.delete(`/follows/users/${userId}`),
+  removeFollower: (userId) => api.delete(`/follows/users/${userId}/follower`),
+  blockUser: (userId) => api.post(`/follows/users/${userId}/block`),
+  unblockUser: (userId) => api.delete(`/follows/users/${userId}/block`),
   getFollowStatus: (userId) => api.get(`/follows/users/${userId}/status`),
   getFollowers: (userId, page = 1, pageSize = 20) =>
     api.get(`/follows/users/${userId}/followers?page=${page}&page_size=${pageSize}`),

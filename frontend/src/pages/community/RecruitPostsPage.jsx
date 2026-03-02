@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { postsAPI } from '../../services/api';
+import useCategoriesStore from '../../stores/categoriesStore';
 import { useSeo } from '../../utils/seo';
 
 const PAGE_SIZE = 12;
@@ -52,6 +53,7 @@ const getDdayLabel = (deadlineAt) => {
 
 function RecruitPostsPage() {
   const navigate = useNavigate();
+  const { categories, fetchCategories } = useCategoriesStore();
   const [page, setPage] = useState(1);
   const [recruitType, setRecruitType] = useState('ALL');
   const [recruitStatus, setRecruitStatus] = useState('OPEN');
@@ -62,6 +64,17 @@ function RecruitPostsPage() {
     description: '프로젝트/스터디 모집 글을 모아서 보고 바로 지원해보세요.',
     url: '/community/recruits',
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      if (a.order != null && b.order != null) return a.order - b.order;
+      return a.id - b.id;
+    });
+  }, [categories]);
 
   const filterOptions = useMemo(() => ({
     postType: 'RECRUIT',
@@ -111,6 +124,21 @@ function RecruitPostsPage() {
           >
             팔로잉
           </button>
+          {sortedCategories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => navigate(`/community/${category.slug}`)}
+              className={`inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors ${
+                category.slug === 'team-recruit'
+                  ? 'bg-ink-900 text-paper-50 border-ink-900'
+                  : category.slug === 'notice'
+                    ? 'bg-paper-100 text-ink-500 border-ink-200 hover:bg-paper-200'
+                    : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </section>
 

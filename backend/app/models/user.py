@@ -39,6 +39,18 @@ class User(Base):
         back_populates="following",
         cascade="all, delete-orphan",
     )
+    blocking_links = relationship(
+        "UserBlock",
+        foreign_keys="UserBlock.blocker_id",
+        back_populates="blocker",
+        cascade="all, delete-orphan",
+    )
+    blocked_by_links = relationship(
+        "UserBlock",
+        foreign_keys="UserBlock.blocked_id",
+        back_populates="blocked",
+        cascade="all, delete-orphan",
+    )
     recruit_applications = relationship(
         "RecruitApplication",
         back_populates="applicant",

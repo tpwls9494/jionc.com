@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { followsAPI } from '../../services/api';
+import { useConfirm } from '../../components/ConfirmModal';
 import useAuthStore from '../../stores/authStore';
 import { getAvatarInitial, resolveProfileImageUrl } from '../../utils/userProfile';
 import { useSeo } from '../../utils/seo';
@@ -11,6 +13,8 @@ const PAGE_SIZE = 20;
 function UserFollowPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const { userId } = useParams();
   const parsedUserId = Number(userId);
   const activeTab = location.pathname.endsWith('/following') ? 'following' : 'followers';
@@ -42,6 +46,32 @@ function UserFollowPage() {
   const total = data?.data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const isMine = currentUser?.id === parsedUserId;
+  const canManageFollowers = isMine && activeTab === 'followers';
+
+  const removeFollowerMutation = useMutation({
+    mutationFn: (targetUserId) => followsAPI.removeFollower(targetUserId),
+    onSuccess: () => {
+      toast.success('팔로워를 삭제했습니다.');
+      queryClient.invalidateQueries(['follow-user-list']);
+      queryClient.invalidateQueries(['posts']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || '팔로워 삭제에 실패했습니다.');
+    },
+  });
+
+  const blockUserMutation = useMutation({
+    mutationFn: (targetUserId) => followsAPI.blockUser(targetUserId),
+    onSuccess: () => {
+      toast.success('사용자를 차단했습니다.');
+      queryClient.invalidateQueries(['follow-user-list']);
+      queryClient.invalidateQueries(['follow-status']);
+      queryClient.invalidateQueries(['posts']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || '사용자 차단에 실패했습니다.');
+    },
+  });
   const heading = useMemo(() => {
     if (isMine) {
       return activeTab === 'followers' ? '내 팔로워' : '내 팔로잉';
@@ -58,6 +88,26 @@ function UserFollowPage() {
       </div>
     );
   }
+
+  const handleRemoveFollower = async (targetUserId, username) => {
+    const ok = await confirm({
+      title: '팔로워 삭제',
+      message: `${username} 님을 팔로워에서 삭제하시겠습니까?`,
+      confirmText: '삭제',
+    });
+    if (!ok) return;
+    removeFollowerMutation.mutate(targetUserId);
+  };
+
+  const handleBlockFollower = async (targetUserId, username) => {
+    const ok = await confirm({
+      title: '사용자 차단',
+      message: `${username} 님을 차단하시겠습니까? 서로 팔로우 관계가 해제됩니다.`,
+      confirmText: '차단',
+    });
+    if (!ok) return;
+    blockUserMutation.mutate(targetUserId);
+  };
 
   return (
     <div className="max-w-3xl mx-auto animate-fade-up">
@@ -131,7 +181,7 @@ function UserFollowPage() {
                     <div className="flex items-center justify-between gap-3">
                       <Link
                         to={`/users/${item.user_id}/followers`}
-                        className="min-w-0 flex items-center gap-3 hover:opacity-85 transition-opacity"
+                        className="min-w-0 flex-1 flex items-center gap-3 hover:opacity-85 transition-opacity"
                       >
                         <div className="w-10 h-10 rounded-full bg-ink-200 overflow-hidden flex items-center justify-center shrink-0">
                           {avatarUrl ? (
@@ -158,6 +208,27 @@ function UserFollowPage() {
                           </p>
                         </div>
                       </Link>
+
+                      {canManageFollowers && item.user_id !== currentUser?.id && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFollower(item.user_id, item.username)}
+                            disabled={removeFollowerMutation.isPending || blockUserMutation.isPending}
+                            className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            삭제
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleBlockFollower(item.user_id, item.username)}
+                            disabled={removeFollowerMutation.isPending || blockUserMutation.isPending}
+                            className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            차단
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </li>
                 );
