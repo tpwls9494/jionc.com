@@ -47,6 +47,7 @@ function UserFollowPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const isMine = currentUser?.id === parsedUserId;
   const canManageFollowers = isMine && activeTab === 'followers';
+  const canManageFollowing = isMine && activeTab === 'following';
 
   const removeFollowerMutation = useMutation({
     mutationFn: (targetUserId) => followsAPI.removeFollower(targetUserId),
@@ -57,6 +58,19 @@ function UserFollowPage() {
     },
     onError: (error) => {
       toast.error(error.response?.data?.detail || '팔로워 삭제에 실패했습니다.');
+    },
+  });
+
+  const unfollowUserMutation = useMutation({
+    mutationFn: (targetUserId) => followsAPI.unfollowUser(targetUserId),
+    onSuccess: () => {
+      toast.success('언팔로우했습니다.');
+      queryClient.invalidateQueries(['follow-user-list']);
+      queryClient.invalidateQueries(['follow-status']);
+      queryClient.invalidateQueries(['posts']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || '언팔로우에 실패했습니다.');
     },
   });
 
@@ -107,6 +121,16 @@ function UserFollowPage() {
     });
     if (!ok) return;
     blockUserMutation.mutate(targetUserId);
+  };
+
+  const handleUnfollowUser = async (targetUserId, username) => {
+    const ok = await confirm({
+      title: '언팔로우',
+      message: `${username} 님을 언팔로우하시겠습니까?`,
+      confirmText: '언팔로우',
+    });
+    if (!ok) return;
+    unfollowUserMutation.mutate(targetUserId);
   };
 
   return (
@@ -209,20 +233,44 @@ function UserFollowPage() {
                         </div>
                       </Link>
 
-                      {canManageFollowers && item.user_id !== currentUser?.id && (
+                      {(canManageFollowers || canManageFollowing) && item.user_id !== currentUser?.id && (
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFollower(item.user_id, item.username)}
-                            disabled={removeFollowerMutation.isPending || blockUserMutation.isPending}
-                            className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            삭제
-                          </button>
+                          {canManageFollowers && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFollower(item.user_id, item.username)}
+                              disabled={
+                                removeFollowerMutation.isPending
+                                || unfollowUserMutation.isPending
+                                || blockUserMutation.isPending
+                              }
+                              className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              삭제
+                            </button>
+                          )}
+                          {canManageFollowing && (
+                            <button
+                              type="button"
+                              onClick={() => handleUnfollowUser(item.user_id, item.username)}
+                              disabled={
+                                removeFollowerMutation.isPending
+                                || unfollowUserMutation.isPending
+                                || blockUserMutation.isPending
+                              }
+                              className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              언팔로우
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleBlockFollower(item.user_id, item.username)}
-                            disabled={removeFollowerMutation.isPending || blockUserMutation.isPending}
+                            disabled={
+                              removeFollowerMutation.isPending
+                              || unfollowUserMutation.isPending
+                              || blockUserMutation.isPending
+                            }
                             className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             차단
