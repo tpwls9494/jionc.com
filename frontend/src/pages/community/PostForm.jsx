@@ -13,7 +13,7 @@ import {
 
 const NOTICE_CATEGORY_SLUG = 'notice'
 const RECRUIT_CATEGORY_SLUG = 'team-recruit'
-const RECRUIT_CATEGORY_NAME = '팀 추천(모집)'
+const RECRUIT_CATEGORY_NAME = '팀 모집'
 const IMAGE_MIME_PREFIX = 'image/'
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const IMAGE_RESIZE_MIN_WIDTH = 140
@@ -1143,7 +1143,7 @@ function PostForm() {
 
     if (!effectiveCategoryId) {
       if (isRecruitPost) {
-        toast.error("모집 전용 카테고리('팀 추천(모집)')를 찾을 수 없습니다.")
+        toast.error("모집 전용 카테고리('팀 모집')를 찾을 수 없습니다.")
       } else {
         toast.error('커뮤니티를 선택해주세요.')
       }
@@ -1314,7 +1314,7 @@ function PostForm() {
               <p className={`mt-1 text-xs ${recruitCategory ? 'text-ink-500' : 'text-red-600'}`}>
                 {recruitCategory
                   ? `모집 글은 '${recruitCategory.name}' 카테고리로 자동 고정됩니다.`
-                  : "모집 전용 카테고리('팀 추천(모집)')를 찾을 수 없습니다. 관리자에게 문의해주세요."}
+                  : "모집 전용 카테고리('팀 모집')를 찾을 수 없습니다. 관리자에게 문의해주세요."}
               </p>
             )}
           </div>

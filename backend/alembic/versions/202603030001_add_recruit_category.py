@@ -22,7 +22,7 @@ def upgrade() -> None:
         """
         INSERT INTO categories (name, description, slug, icon, "order", is_active)
         SELECT
-            '팀 추천(모집)',
+            '팀 모집',
             '프로젝트/스터디 팀 모집 게시판',
             'team-recruit',
             '🤝',
@@ -31,7 +31,7 @@ def upgrade() -> None:
         WHERE NOT EXISTS (
             SELECT 1
             FROM categories
-            WHERE slug = 'team-recruit' OR name = '팀 추천(모집)'
+            WHERE slug = 'team-recruit' OR name IN ('팀 모집', '팀 추천(모집)')
         )
         """
     )

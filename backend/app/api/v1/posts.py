@@ -31,7 +31,7 @@ from app.schemas.post import (
 router = APIRouter()
 NOTICE_CATEGORY_SLUG = "notice"
 RECRUIT_CATEGORY_SLUG = "team-recruit"
-RECRUIT_CATEGORY_NAME = "팀 추천(모집)"
+RECRUIT_CATEGORY_NAME = "팀 모집"
 
 
 def get_category_or_404(db: Session, category_id: int) -> Category:
@@ -66,7 +66,7 @@ def get_recruit_category_or_400(db: Session) -> Category:
     if not recruit_category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="모집 전용 카테고리(팀 추천(모집))가 없습니다. 관리자에게 문의해주세요.",
+            detail="모집 전용 카테고리(팀 모집)가 없습니다. 관리자에게 문의해주세요.",
         )
     return recruit_category
 
@@ -82,7 +82,7 @@ def ensure_recruit_category_rule(
     if category.id != recruit_category.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="모집 글은 팀 추천(모집) 카테고리에서만 작성할 수 있습니다.",
+            detail="모집 글은 팀 모집 카테고리에서만 작성할 수 있습니다.",
         )
 
 
