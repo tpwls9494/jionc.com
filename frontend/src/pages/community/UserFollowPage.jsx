@@ -180,6 +180,17 @@ function UserFollowPage() {
           <span className="ml-auto text-xs text-ink-400">총 {total}명</span>
         </div>
 
+        {isMine && (
+          <div className="mt-2">
+            <Link
+              to="/mypage/blocks"
+              className="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-md border border-ink-200 bg-white text-ink-600 hover:bg-paper-100"
+            >
+              차단 관리로 이동
+            </Link>
+          </div>
+        )}
+
         <div className="mt-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-10 gap-2">

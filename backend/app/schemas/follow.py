@@ -41,3 +41,17 @@ class BlockResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BlockUserSummary(BaseModel):
+    user_id: int
+    username: str
+    profile_image_url: Optional[str] = None
+    blocked_at: datetime
+
+
+class BlockUserListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    users: List[BlockUserSummary]

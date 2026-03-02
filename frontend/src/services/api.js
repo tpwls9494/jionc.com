@@ -146,6 +146,8 @@ export const followsAPI = {
   removeFollower: (userId) => api.delete(`/follows/users/${userId}/follower`),
   blockUser: (userId) => api.post(`/follows/users/${userId}/block`),
   unblockUser: (userId) => api.delete(`/follows/users/${userId}/block`),
+  getMyBlocks: (page = 1, pageSize = 20) =>
+    api.get(`/follows/me/blocks?page=${page}&page_size=${pageSize}`),
   getFollowStatus: (userId) => api.get(`/follows/users/${userId}/status`),
   getFollowers: (userId, page = 1, pageSize = 20) =>
     api.get(`/follows/users/${userId}/followers?page=${page}&page_size=${pageSize}`),

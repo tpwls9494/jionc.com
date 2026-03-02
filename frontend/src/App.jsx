@@ -7,6 +7,7 @@ import { ConfirmProvider } from './components/ConfirmModal'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import MyPage from './pages/MyPage'
+import BlockedUsersPage from './pages/BlockedUsersPage'
 import OAuthCallback from './pages/OAuthCallback'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -87,6 +88,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="mypage/blocks"
+            element={
+              <ProtectedRoute>
+                <BlockedUsersPage />
               </ProtectedRoute>
             }
           />

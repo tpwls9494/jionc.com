@@ -202,6 +202,12 @@ function MyPage() {
           >
             내 팔로잉 보기
           </Link>
+          <Link
+            to="/mypage/blocks"
+            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full border border-ink-200 bg-white text-ink-600 hover:bg-paper-100"
+          >
+            차단 관리
+          </Link>
         </div>
       </header>
 

@@ -7,9 +7,12 @@ from app.crud import follow as crud_follow
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.models.user import User
+from app.models.user_block import UserBlock
 from app.models.user_follow import UserFollow
 from app.schemas.follow import (
     BlockResponse,
+    BlockUserListResponse,
+    BlockUserSummary,
     FollowResponse,
     FollowStatusResponse,
     FollowUserListResponse,
@@ -45,6 +48,29 @@ def _build_follow_user_list_response(
         for user, follow in rows
     ]
     return FollowUserListResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        users=users,
+    )
+
+
+def _build_block_user_list_response(
+    rows: list[tuple[User, UserBlock]],
+    total: int,
+    page: int,
+    page_size: int,
+) -> BlockUserListResponse:
+    users = [
+        BlockUserSummary(
+            user_id=user.id,
+            username=user.username,
+            profile_image_url=user.profile_image_url,
+            blocked_at=block.created_at,
+        )
+        for user, block in rows
+    ]
+    return BlockUserListResponse(
         total=total,
         page=page,
         page_size=page_size,
@@ -209,6 +235,23 @@ def unblock_user(
         blocked_id=user_id,
     )
     return None
+
+
+@router.get("/me/blocks", response_model=BlockUserListResponse)
+def get_my_blocks(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    skip = (page - 1) * page_size
+    rows, total = crud_follow.get_blocked_users(
+        db,
+        blocker_id=current_user.id,
+        skip=skip,
+        limit=page_size,
+    )
+    return _build_block_user_list_response(rows, total=total, page=page, page_size=page_size)
 
 
 @router.get("/users/{user_id}/status", response_model=FollowStatusResponse)

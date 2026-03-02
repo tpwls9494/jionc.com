@@ -145,6 +145,28 @@ def delete_block(db: Session, blocker_id: int, blocked_id: int) -> bool:
     return True
 
 
+def get_blocked_users(
+    db: Session,
+    blocker_id: int,
+    skip: int = 0,
+    limit: int = 20,
+) -> Tuple[list[tuple[User, UserBlock]], int]:
+    query = (
+        db.query(User, UserBlock)
+        .join(UserBlock, UserBlock.blocked_id == User.id)
+        .filter(UserBlock.blocker_id == blocker_id)
+    )
+    total = query.count()
+    rows = (
+        query
+        .order_by(desc(UserBlock.created_at))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return rows, total
+
+
 def get_followers(
     db: Session,
     user_id: int,

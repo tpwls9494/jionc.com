@@ -24,6 +24,8 @@ from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryRespons
 from app.schemas.like import LikeCreate, LikeResponse
 from app.schemas.follow import (
     BlockResponse,
+    BlockUserListResponse,
+    BlockUserSummary,
     FollowResponse,
     FollowStatusResponse,
     FollowUserSummary,
@@ -89,6 +91,8 @@ __all__ = [
     "LikeCreate",
     "LikeResponse",
     "BlockResponse",
+    "BlockUserSummary",
+    "BlockUserListResponse",
     "FollowResponse",
     "FollowStatusResponse",
     "FollowUserSummary",
