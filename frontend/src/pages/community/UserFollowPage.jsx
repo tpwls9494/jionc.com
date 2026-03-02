@@ -9,6 +9,15 @@ import { getAvatarInitial, resolveProfileImageUrl } from '../../utils/userProfil
 import { useSeo } from '../../utils/seo';
 
 const PAGE_SIZE = 20;
+const TAB_FOLLOWERS = 'followers';
+const TAB_FOLLOWING = 'following';
+const TAB_BLOCKS = 'blocks';
+
+const resolveActiveTab = (pathname) => {
+  if (pathname.endsWith('/following')) return TAB_FOLLOWING;
+  if (pathname.endsWith('/blocks')) return TAB_BLOCKS;
+  return TAB_FOLLOWERS;
+};
 
 function UserFollowPage() {
   const navigate = useNavigate();
@@ -17,37 +26,49 @@ function UserFollowPage() {
   const confirm = useConfirm();
   const { userId } = useParams();
   const parsedUserId = Number(userId);
-  const activeTab = location.pathname.endsWith('/following') ? 'following' : 'followers';
+  const activeTab = resolveActiveTab(location.pathname);
   const [page, setPage] = useState(1);
   const currentUser = useAuthStore((state) => state.user);
+
+  const isMine = currentUser?.id === parsedUserId;
+  const canViewBlocks = activeTab !== TAB_BLOCKS || isMine;
+  const canManageFollowers = isMine && activeTab === TAB_FOLLOWERS;
+  const canManageFollowing = isMine && activeTab === TAB_FOLLOWING;
+  const canManageBlocks = isMine && activeTab === TAB_BLOCKS;
 
   useEffect(() => {
     setPage(1);
   }, [activeTab, parsedUserId]);
 
   useSeo({
-    title: activeTab === 'followers' ? '팔로워 목록' : '팔로잉 목록',
-    description: '사용자 팔로우 관계를 확인할 수 있는 페이지',
+    title:
+      activeTab === TAB_FOLLOWERS
+        ? '팔로워 목록'
+        : activeTab === TAB_FOLLOWING
+          ? '팔로잉 목록'
+          : '차단 목록',
+    description: '팔로워, 팔로잉, 차단 목록을 확인할 수 있는 페이지',
     url: `/users/${parsedUserId}/${activeTab}`,
     noindex: true,
   });
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['follow-user-list', activeTab, parsedUserId, page],
-    queryFn: () => (
-      activeTab === 'followers'
-        ? followsAPI.getFollowers(parsedUserId, page, PAGE_SIZE)
-        : followsAPI.getFollowing(parsedUserId, page, PAGE_SIZE)
-    ),
-    enabled: Number.isFinite(parsedUserId) && parsedUserId > 0,
+    queryFn: () => {
+      if (activeTab === TAB_FOLLOWERS) {
+        return followsAPI.getFollowers(parsedUserId, page, PAGE_SIZE);
+      }
+      if (activeTab === TAB_FOLLOWING) {
+        return followsAPI.getFollowing(parsedUserId, page, PAGE_SIZE);
+      }
+      return followsAPI.getMyBlocks(page, PAGE_SIZE);
+    },
+    enabled: Number.isFinite(parsedUserId) && parsedUserId > 0 && canViewBlocks,
   });
 
   const users = data?.data?.users || [];
   const total = data?.data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const isMine = currentUser?.id === parsedUserId;
-  const canManageFollowers = isMine && activeTab === 'followers';
-  const canManageFollowing = isMine && activeTab === 'following';
 
   const removeFollowerMutation = useMutation({
     mutationFn: (targetUserId) => followsAPI.removeFollower(targetUserId),
@@ -86,11 +107,34 @@ function UserFollowPage() {
       toast.error(error.response?.data?.detail || '사용자 차단에 실패했습니다.');
     },
   });
+
+  const unblockUserMutation = useMutation({
+    mutationFn: (targetUserId) => followsAPI.unblockUser(targetUserId),
+    onSuccess: () => {
+      toast.success('차단을 해제했습니다.');
+      queryClient.invalidateQueries(['follow-user-list']);
+      queryClient.invalidateQueries(['follow-status']);
+      queryClient.invalidateQueries(['posts']);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || '차단 해제에 실패했습니다.');
+    },
+  });
+
+  const isMutating =
+    removeFollowerMutation.isPending
+    || unfollowUserMutation.isPending
+    || blockUserMutation.isPending
+    || unblockUserMutation.isPending;
+
   const heading = useMemo(() => {
     if (isMine) {
-      return activeTab === 'followers' ? '내 팔로워' : '내 팔로잉';
+      if (activeTab === TAB_FOLLOWERS) return '내 팔로워';
+      if (activeTab === TAB_FOLLOWING) return '내 팔로잉';
+      return '내 차단 목록';
     }
-    return activeTab === 'followers' ? `사용자 #${parsedUserId}의 팔로워` : `사용자 #${parsedUserId}의 팔로잉`;
+    if (activeTab === TAB_FOLLOWERS) return `사용자 #${parsedUserId}의 팔로워`;
+    return `사용자 #${parsedUserId}의 팔로잉`;
   }, [activeTab, isMine, parsedUserId]);
 
   if (!Number.isFinite(parsedUserId) || parsedUserId <= 0) {
@@ -98,6 +142,26 @@ function UserFollowPage() {
       <div className="max-w-3xl mx-auto animate-fade-up">
         <section className="card p-8 text-center">
           <p className="text-sm text-ink-500">잘못된 사용자 경로입니다.</p>
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === TAB_BLOCKS && !isMine) {
+    return (
+      <div className="max-w-3xl mx-auto animate-fade-up">
+        <section className="card p-8 text-center">
+          <h1 className="font-display text-xl font-semibold text-ink-900">접근 권한이 없습니다.</h1>
+          <p className="mt-2 text-sm text-ink-500">차단 목록은 본인 계정에서만 확인할 수 있습니다.</p>
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={() => navigate(`/users/${parsedUserId}/followers`)}
+              className="btn-secondary text-sm"
+            >
+              팔로워 목록으로 이동
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -113,7 +177,7 @@ function UserFollowPage() {
     removeFollowerMutation.mutate(targetUserId);
   };
 
-  const handleBlockFollower = async (targetUserId, username) => {
+  const handleBlockUser = async (targetUserId, username) => {
     const ok = await confirm({
       title: '사용자 차단',
       message: `${username} 님을 차단하시겠습니까? 서로 팔로우 관계가 해제됩니다.`,
@@ -133,6 +197,16 @@ function UserFollowPage() {
     unfollowUserMutation.mutate(targetUserId);
   };
 
+  const handleUnblockUser = async (targetUserId, username) => {
+    const ok = await confirm({
+      title: '차단 해제',
+      message: `${username} 님의 차단을 해제하시겠습니까?`,
+      confirmText: '해제',
+    });
+    if (!ok) return;
+    unblockUserMutation.mutate(targetUserId);
+  };
+
   return (
     <div className="max-w-3xl mx-auto animate-fade-up">
       <button
@@ -149,9 +223,15 @@ function UserFollowPage() {
       <section className="card p-5 sm:p-6">
         <h1 className="font-display text-2xl font-bold text-ink-950 tracking-tight">{heading}</h1>
         <p className="mt-1 text-xs text-ink-500">
-          {activeTab === 'followers'
-            ? '이 사용자를 팔로우하는 계정 목록입니다.'
-            : '이 사용자가 팔로우하는 계정 목록입니다.'}
+          {activeTab === TAB_FOLLOWERS
+            ? isMine
+              ? '나를 팔로우하는 계정 목록입니다.'
+              : '이 사용자를 팔로우하는 계정 목록입니다.'
+            : activeTab === TAB_FOLLOWING
+              ? isMine
+                ? '내가 팔로우하는 계정 목록입니다.'
+                : '이 사용자가 팔로우하는 계정 목록입니다.'
+              : '내가 차단한 계정 목록입니다.'}
         </p>
 
         <div className="mt-4 flex items-center gap-2">
@@ -159,7 +239,7 @@ function UserFollowPage() {
             type="button"
             onClick={() => navigate(`/users/${parsedUserId}/followers`)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              activeTab === 'followers'
+              activeTab === TAB_FOLLOWERS
                 ? 'bg-ink-900 text-paper-50 border-ink-900'
                 : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
             }`}
@@ -170,26 +250,28 @@ function UserFollowPage() {
             type="button"
             onClick={() => navigate(`/users/${parsedUserId}/following`)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              activeTab === 'following'
+              activeTab === TAB_FOLLOWING
                 ? 'bg-ink-900 text-paper-50 border-ink-900'
                 : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
             }`}
           >
             팔로잉
           </button>
+          {isMine && (
+            <button
+              type="button"
+              onClick={() => navigate(`/users/${parsedUserId}/blocks`)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                activeTab === TAB_BLOCKS
+                  ? 'bg-ink-900 text-paper-50 border-ink-900'
+                  : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
+              }`}
+            >
+              차단
+            </button>
+          )}
           <span className="ml-auto text-xs text-ink-400">총 {total}명</span>
         </div>
-
-        {isMine && (
-          <div className="mt-2">
-            <Link
-              to="/mypage/blocks"
-              className="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-md border border-ink-200 bg-white text-ink-600 hover:bg-paper-100"
-            >
-              차단 관리로 이동
-            </Link>
-          </div>
-        )}
 
         <div className="mt-4">
           {isLoading ? (
@@ -203,14 +285,18 @@ function UserFollowPage() {
             </div>
           ) : users.length === 0 ? (
             <div className="rounded-xl border border-ink-200 bg-paper-50 px-4 py-8 text-center text-sm text-ink-500">
-              {activeTab === 'followers'
+              {activeTab === TAB_FOLLOWERS
                 ? '아직 팔로워가 없습니다.'
-                : '아직 팔로잉한 사용자가 없습니다.'}
+                : activeTab === TAB_FOLLOWING
+                  ? '아직 팔로잉한 사용자가 없습니다.'
+                  : '아직 차단한 사용자가 없습니다.'}
             </div>
           ) : (
             <ul className="space-y-2">
               {users.map((item) => {
                 const avatarUrl = resolveProfileImageUrl(item.profile_image_url);
+                const actionAt = activeTab === TAB_BLOCKS ? item.blocked_at : item.followed_at;
+
                 return (
                   <li key={`${activeTab}-${item.user_id}`} className="rounded-xl border border-ink-100 bg-paper-50 px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
@@ -232,29 +318,23 @@ function UserFollowPage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-ink-800 truncate">
-                            {item.username}
-                          </p>
+                          <p className="text-sm font-semibold text-ink-800 truncate">{item.username}</p>
                           <p className="text-xs text-ink-400">
                             {new Intl.DateTimeFormat('ko-KR', {
                               dateStyle: 'medium',
                               timeStyle: 'short',
-                            }).format(new Date(item.followed_at))}
+                            }).format(new Date(actionAt))}
                           </p>
                         </div>
                       </Link>
 
-                      {(canManageFollowers || canManageFollowing) && item.user_id !== currentUser?.id && (
+                      {(canManageFollowers || canManageFollowing || canManageBlocks) && item.user_id !== currentUser?.id && (
                         <div className="flex items-center gap-1.5 shrink-0">
                           {canManageFollowers && (
                             <button
                               type="button"
                               onClick={() => handleRemoveFollower(item.user_id, item.username)}
-                              disabled={
-                                removeFollowerMutation.isPending
-                                || unfollowUserMutation.isPending
-                                || blockUserMutation.isPending
-                              }
+                              disabled={isMutating}
                               className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               삭제
@@ -264,28 +344,32 @@ function UserFollowPage() {
                             <button
                               type="button"
                               onClick={() => handleUnfollowUser(item.user_id, item.username)}
-                              disabled={
-                                removeFollowerMutation.isPending
-                                || unfollowUserMutation.isPending
-                                || blockUserMutation.isPending
-                              }
+                              disabled={isMutating}
                               className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               언팔로우
                             </button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleBlockFollower(item.user_id, item.username)}
-                            disabled={
-                              removeFollowerMutation.isPending
-                              || unfollowUserMutation.isPending
-                              || blockUserMutation.isPending
-                            }
-                            className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            차단
-                          </button>
+                          {(canManageFollowers || canManageFollowing) && (
+                            <button
+                              type="button"
+                              onClick={() => handleBlockUser(item.user_id, item.username)}
+                              disabled={isMutating}
+                              className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              차단
+                            </button>
+                          )}
+                          {canManageBlocks && (
+                            <button
+                              type="button"
+                              onClick={() => handleUnblockUser(item.user_id, item.username)}
+                              disabled={isMutating}
+                              className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-ink-200 bg-white text-ink-600 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              차단 해제
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

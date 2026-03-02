@@ -7,7 +7,6 @@ import { ConfirmProvider } from './components/ConfirmModal'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import MyPage from './pages/MyPage'
-import BlockedUsersPage from './pages/BlockedUsersPage'
 import OAuthCallback from './pages/OAuthCallback'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -34,6 +33,16 @@ function ProtectedRoute({ children }) {
   }
 
   return children
+}
+
+function MyBlocksRedirect() {
+  const user = useAuthStore((state) => state.user)
+
+  if (!user?.id) {
+    return <Navigate to="/mypage" replace />
+  }
+
+  return <Navigate to={`/users/${user.id}/blocks`} replace />
 }
 
 function App() {
@@ -76,6 +85,7 @@ function App() {
           <Route path="community/following" element={<FollowingPostsPage />} />
           <Route path="users/:userId/followers" element={<UserFollowPage />} />
           <Route path="users/:userId/following" element={<UserFollowPage />} />
+          <Route path="users/:userId/blocks" element={<UserFollowPage />} />
           <Route path="community/:slug" element={<CommunityBoardPage />} />
           <Route path="posts/:id" element={<PostDetail />} />
           <Route path="terms" element={<TermsPage />} />
@@ -95,7 +105,7 @@ function App() {
             path="mypage/blocks"
             element={
               <ProtectedRoute>
-                <BlockedUsersPage />
+                <MyBlocksRedirect />
               </ProtectedRoute>
             }
           />
