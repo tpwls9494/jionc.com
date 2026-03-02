@@ -75,8 +75,8 @@ function createPoint(width, height, speedScale) {
     y: Math.random() * height,
     vx: Math.cos(angle) * velocity,
     vy: Math.sin(angle) * velocity,
-    radius: Math.random() * 1.2 + 0.6,
-    opacity: Math.random() * 0.1 + 0.1,
+    radius: Math.random() * 1.5 + 0.75,
+    opacity: Math.random() * 0.1 + 0.12,
   };
 }
 
@@ -138,12 +138,22 @@ function CommunityHeroConstellation() {
       const settings = settingsRef.current;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
-      const points = pointsRef.current;
+      let points = pointsRef.current;
 
-      if (!settings.enabled || width <= 0 || height <= 0 || points.length === 0) {
+      if (!settings.enabled) {
         ctx.clearRect(0, 0, width, height);
         stopAnimation();
         return;
+      }
+
+      if (width <= 0 || height <= 0) {
+        animationFrameRef.current = window.requestAnimationFrame(drawFrame);
+        return;
+      }
+
+      if (points.length === 0) {
+        seedPoints(width, height);
+        points = pointsRef.current;
       }
 
       if (lastTimestampRef.current === 0) {
@@ -187,12 +197,12 @@ function CommunityHeroConstellation() {
           if (distanceSq > maxDistanceSq) continue;
 
           const distance = Math.sqrt(distanceSq);
-          const alpha = (1 - distance / maxDistance) * 0.18;
+          const alpha = (1 - distance / maxDistance) * 0.2;
 
           ctx.beginPath();
           ctx.moveTo(from.x, from.y);
           ctx.lineTo(to.x, to.y);
-          ctx.lineWidth = 0.7;
+          ctx.lineWidth = 0.8;
           ctx.strokeStyle = `rgba(107, 114, 128, ${alpha.toFixed(3)})`;
           ctx.stroke();
         }
