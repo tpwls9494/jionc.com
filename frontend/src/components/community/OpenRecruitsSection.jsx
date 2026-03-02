@@ -52,7 +52,7 @@ function OpenRecruitsSection() {
   return (
     <section className="mb-4 card rounded-xl overflow-hidden">
       <header className="px-4 py-3 border-b border-ink-100 bg-paper-50 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-ink-900">Open Recruits</h2>
+        <h2 className="text-sm font-semibold text-ink-900">열린 모집</h2>
         <Link
           to="/community/recruits"
           className="text-xs text-ink-500 hover:text-ink-700 transition-colors"
