@@ -12,6 +12,8 @@ import {
 } from '../../utils/richContent'
 
 const NOTICE_CATEGORY_SLUG = 'notice'
+const RECRUIT_CATEGORY_SLUG = 'team-recruit'
+const RECRUIT_CATEGORY_NAME = '팀 추천(모집)'
 const IMAGE_MIME_PREFIX = 'image/'
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const IMAGE_RESIZE_MIN_WIDTH = 140
@@ -218,6 +220,7 @@ function PostForm() {
   const resizeHoverImageRef = useRef(null)
   const selectedImageRef = useRef(null)
   const imageMoveSessionRef = useRef(null)
+  const lastNormalCategoryIdRef = useRef('')
 
   const { categories, fetchCategories } = useCategoriesStore()
   const user = useAuthStore((state) => state.user)
@@ -272,6 +275,13 @@ function PostForm() {
   const selectableCategories = categories.filter(
     (category) => user?.is_admin || category.slug !== NOTICE_CATEGORY_SLUG,
   )
+  const recruitCategory = selectableCategories.find(
+    (category) => (
+      category.slug === RECRUIT_CATEGORY_SLUG
+      || category.name === RECRUIT_CATEGORY_NAME
+    ),
+  ) || null
+  const recruitCategoryId = recruitCategory ? String(recruitCategory.id) : ''
 
   const createMutation = useMutation({
     mutationFn: (data) => postsAPI.createPost(data),
@@ -319,6 +329,9 @@ function PostForm() {
       const recruitMeta = postData.data.recruit_meta || null
       setTitle(postData.data.title || '')
       setCategoryId(String(postData.data.category_id || ''))
+      if (nextPostType !== POST_TYPE_RECRUIT && postData.data.category_id) {
+        lastNormalCategoryIdRef.current = String(postData.data.category_id)
+      }
       setPostType(nextPostType)
       setRecruitType(recruitMeta?.recruit_type || '')
       setRecruitStatus(recruitMeta?.status || RECRUIT_STATUS_OPEN)
@@ -337,6 +350,7 @@ function PostForm() {
     }
 
     if (!isEdit) {
+      lastNormalCategoryIdRef.current = ''
       setPostType(POST_TYPE_NORMAL)
       setRecruitType('')
       setRecruitStatus(RECRUIT_STATUS_OPEN)
@@ -354,6 +368,36 @@ function PostForm() {
       setRecruitLocationText('')
     }
   }, [recruitIsOnline])
+
+  useEffect(() => {
+    if (postType !== POST_TYPE_RECRUIT && categoryId) {
+      lastNormalCategoryIdRef.current = categoryId
+    }
+  }, [postType, categoryId])
+
+  useEffect(() => {
+    if (postType === POST_TYPE_RECRUIT && recruitCategoryId && categoryId !== recruitCategoryId) {
+      setCategoryId(recruitCategoryId)
+    }
+  }, [postType, recruitCategoryId, categoryId])
+
+  const handlePostTypeChange = (nextType) => {
+    if (nextType === postType) return
+
+    if (nextType === POST_TYPE_RECRUIT) {
+      if (categoryId && categoryId !== recruitCategoryId) {
+        lastNormalCategoryIdRef.current = categoryId
+      }
+      setPostType(nextType)
+      setCategoryId(recruitCategoryId || '')
+      return
+    }
+
+    setPostType(nextType)
+    if (categoryId === recruitCategoryId) {
+      setCategoryId(lastNormalCategoryIdRef.current || '')
+    }
+  }
 
   const ensureEditorRange = () => {
     const editor = editorRef.current
@@ -1090,14 +1134,19 @@ function PostForm() {
     const trimmedTitle = title.trim()
     const serializedContent = serializeContentWithPlaceholders()
     const isRecruitPost = postType === POST_TYPE_RECRUIT
+    const effectiveCategoryId = isRecruitPost ? recruitCategoryId : categoryId
 
     if (!trimmedTitle || !hasMeaningfulContent(serializedContent)) {
       toast.error('제목과 내용을 모두 입력해주세요.')
       return
     }
 
-    if (!categoryId) {
-      toast.error('커뮤니티를 선택해주세요.')
+    if (!effectiveCategoryId) {
+      if (isRecruitPost) {
+        toast.error("모집 전용 카테고리('팀 추천(모집)')를 찾을 수 없습니다.")
+      } else {
+        toast.error('커뮤니티를 선택해주세요.')
+      }
       return
     }
 
@@ -1127,7 +1176,7 @@ function PostForm() {
     const data = {
       title: trimmedTitle,
       content: serializedContent,
-      category_id: parseInt(categoryId, 10),
+      category_id: parseInt(effectiveCategoryId, 10),
       post_type: postType,
     }
 
@@ -1244,7 +1293,8 @@ function PostForm() {
                 id="category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="input-field h-[52px] pr-12 appearance-none"
+                className="input-field h-[52px] pr-12 appearance-none disabled:bg-paper-200 disabled:text-ink-500 disabled:cursor-not-allowed"
+                disabled={postType === POST_TYPE_RECRUIT}
                 required
               >
                 <option value="">커뮤니티를 선택하세요</option>
@@ -1260,6 +1310,13 @@ function PostForm() {
                 </svg>
               </span>
             </div>
+            {postType === POST_TYPE_RECRUIT && (
+              <p className={`mt-1 text-xs ${recruitCategory ? 'text-ink-500' : 'text-red-600'}`}>
+                {recruitCategory
+                  ? `모집 글은 '${recruitCategory.name}' 카테고리로 자동 고정됩니다.`
+                  : "모집 전용 카테고리('팀 추천(모집)')를 찾을 수 없습니다. 관리자에게 문의해주세요."}
+              </p>
+            )}
           </div>
 
           <div>
@@ -1269,7 +1326,7 @@ function PostForm() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setPostType(POST_TYPE_NORMAL)}
+                onClick={() => handlePostTypeChange(POST_TYPE_NORMAL)}
                 className={`h-[46px] rounded-lg border text-sm font-medium transition-colors ${
                   postType === POST_TYPE_NORMAL
                     ? 'bg-ink-900 text-paper-50 border-ink-900'
@@ -1280,7 +1337,7 @@ function PostForm() {
               </button>
               <button
                 type="button"
-                onClick={() => setPostType(POST_TYPE_RECRUIT)}
+                onClick={() => handlePostTypeChange(POST_TYPE_RECRUIT)}
                 className={`h-[46px] rounded-lg border text-sm font-medium transition-colors ${
                   postType === POST_TYPE_RECRUIT
                     ? 'bg-ink-900 text-paper-50 border-ink-900'

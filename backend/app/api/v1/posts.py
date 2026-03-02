@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_current_user_optional
@@ -29,6 +30,8 @@ from app.schemas.post import (
 
 router = APIRouter()
 NOTICE_CATEGORY_SLUG = "notice"
+RECRUIT_CATEGORY_SLUG = "team-recruit"
+RECRUIT_CATEGORY_NAME = "팀 추천(모집)"
 
 
 def get_category_or_404(db: Session, category_id: int) -> Category:
@@ -46,6 +49,40 @@ def ensure_notice_write_permission(category: Category, current_user: User) -> No
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can write notice posts",
+        )
+
+
+def get_recruit_category_or_400(db: Session) -> Category:
+    recruit_category = (
+        db.query(Category)
+        .filter(
+            or_(
+                Category.slug == RECRUIT_CATEGORY_SLUG,
+                Category.name == RECRUIT_CATEGORY_NAME,
+            )
+        )
+        .first()
+    )
+    if not recruit_category:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="모집 전용 카테고리(팀 추천(모집))가 없습니다. 관리자에게 문의해주세요.",
+        )
+    return recruit_category
+
+
+def ensure_recruit_category_rule(
+    db: Session,
+    category: Category,
+    post_type: Optional[str],
+) -> None:
+    if post_type != POST_TYPE_RECRUIT:
+        return
+    recruit_category = get_recruit_category_or_400(db)
+    if category.id != recruit_category.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="모집 글은 팀 추천(모집) 카테고리에서만 작성할 수 있습니다.",
         )
 
 
@@ -232,6 +269,7 @@ def create_post(
 ):
     category = get_category_or_404(db, post.category_id)
     ensure_notice_write_permission(category, current_user)
+    ensure_recruit_category_rule(db, category, post.post_type)
 
     try:
         db_post = crud_post.create_post(db, post, current_user.id)
@@ -276,6 +314,8 @@ def update_post(
     )
     target_category = get_category_or_404(db, target_category_id)
     ensure_notice_write_permission(target_category, current_user)
+    target_post_type = post_update.post_type if post_update.post_type is not None else db_post.post_type
+    ensure_recruit_category_rule(db, target_category, target_post_type)
 
     try:
         updated_post = crud_post.update_post(db, post_id, post_update)
