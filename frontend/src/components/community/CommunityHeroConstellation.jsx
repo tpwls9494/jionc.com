@@ -7,6 +7,7 @@ const DESKTOP_SETTINGS = {
   linkDistance: 100,
   speedScale: 1,
   pixelRatioCap: 1.5,
+  frameInterval: 32,
 };
 
 const MOBILE_SETTINGS = {
@@ -16,6 +17,17 @@ const MOBILE_SETTINGS = {
   linkDistance: 76,
   speedScale: 0.75,
   pixelRatioCap: 1.2,
+  frameInterval: 42,
+};
+
+const LOW_END_SETTINGS = {
+  density: 0.000018,
+  minPoints: 6,
+  maxPoints: 14,
+  linkDistance: 64,
+  speedScale: 0.55,
+  pixelRatioCap: 1,
+  frameInterval: 55,
 };
 
 function supportsReducedMotion() {
@@ -37,10 +49,14 @@ function getSettings() {
   const saveData = Boolean(connection?.saveData);
   const memory = navigator.deviceMemory ?? 4;
   const cores = navigator.hardwareConcurrency ?? 4;
-  const veryLowEnd = saveData || memory <= 1 || cores <= 2;
+  const veryLowEnd = memory <= 1 || cores <= 2;
 
-  if (prefersReducedMotion || veryLowEnd) {
+  if (prefersReducedMotion || saveData) {
     return { enabled: false, ...MOBILE_SETTINGS };
+  }
+
+  if (veryLowEnd) {
+    return { enabled: true, ...LOW_END_SETTINGS };
   }
 
   const constrained = isMobileViewport || isCoarsePointer || memory <= 2 || cores <= 4;
@@ -130,8 +146,13 @@ function CommunityHeroConstellation() {
         return;
       }
 
-      const delta = Math.min(34, timestamp - (lastTimestampRef.current || timestamp));
-      const step = delta / 16.67;
+      const delta = timestamp - (lastTimestampRef.current || timestamp);
+      if (delta < settings.frameInterval) {
+        animationFrameRef.current = window.requestAnimationFrame(drawFrame);
+        return;
+      }
+
+      const clampedDelta = Math.min(80, delta);
       lastTimestampRef.current = timestamp;
 
       ctx.clearRect(0, 0, width, height);
@@ -139,8 +160,8 @@ function CommunityHeroConstellation() {
       for (let i = 0; i < points.length; i += 1) {
         const point = points[i];
 
-        point.x += point.vx * step;
-        point.y += point.vy * step;
+        point.x += point.vx * (clampedDelta / 16.67);
+        point.y += point.vy * (clampedDelta / 16.67);
 
         if (point.x < 0 || point.x > width) point.vx *= -1;
         if (point.y < 0 || point.y > height) point.vy *= -1;
