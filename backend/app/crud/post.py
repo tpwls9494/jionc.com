@@ -223,6 +223,8 @@ def create_post(db: Session, post: PostCreate, user_id: int) -> Post:
     if db_post.post_type == POST_TYPE_RECRUIT:
         if recruit_meta_data is None:
             raise ValueError("모집 글에는 모집 정보를 입력해야 합니다.")
+        # Recruit posts always start as OPEN. Closing is handled later via edit.
+        recruit_meta_data["status"] = "OPEN"
         if recruit_meta_data.get("is_online"):
             recruit_meta_data["location_text"] = None
         db.add(RecruitMeta(post_id=db_post.id, **recruit_meta_data))

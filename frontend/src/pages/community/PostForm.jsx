@@ -1134,7 +1134,7 @@ function PostForm() {
     if (isRecruitPost) {
       data.recruit_meta = {
         recruit_type: recruitType,
-        status: recruitStatus,
+        status: isEdit ? recruitStatus : RECRUIT_STATUS_OPEN,
         is_online: recruitIsOnline,
         location_text: recruitIsOnline ? null : recruitLocationText.trim(),
         schedule_text: recruitScheduleText.trim(),
@@ -1319,15 +1319,22 @@ function PostForm() {
                   <label htmlFor="recruit-status" className="block text-xs font-semibold text-ink-600 mb-1.5">
                     모집 상태
                   </label>
-                  <select
-                    id="recruit-status"
-                    value={recruitStatus}
-                    onChange={(e) => setRecruitStatus(e.target.value)}
-                    className="input-field !py-2.5"
-                  >
-                    <option value={RECRUIT_STATUS_OPEN}>모집중</option>
-                    <option value={RECRUIT_STATUS_CLOSED}>마감</option>
-                  </select>
+                  {isEdit ? (
+                    <select
+                      id="recruit-status"
+                      value={recruitStatus}
+                      onChange={(e) => setRecruitStatus(e.target.value)}
+                      className="input-field !py-2.5"
+                    >
+                      <option value={RECRUIT_STATUS_OPEN}>모집중</option>
+                      <option value={RECRUIT_STATUS_CLOSED}>마감</option>
+                    </select>
+                  ) : (
+                    <div className="h-[42px] px-3 rounded-lg border border-ink-200 bg-white text-xs text-ink-600 flex items-center justify-between">
+                      <span className="font-medium text-emerald-700">모집중으로 시작</span>
+                      <span className="text-ink-400">마감은 수정에서 가능</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
