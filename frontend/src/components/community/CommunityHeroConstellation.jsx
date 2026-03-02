@@ -146,7 +146,13 @@ function CommunityHeroConstellation() {
         return;
       }
 
-      const delta = timestamp - (lastTimestampRef.current || timestamp);
+      if (lastTimestampRef.current === 0) {
+        lastTimestampRef.current = timestamp;
+        animationFrameRef.current = window.requestAnimationFrame(drawFrame);
+        return;
+      }
+
+      const delta = timestamp - lastTimestampRef.current;
       if (delta < settings.frameInterval) {
         animationFrameRef.current = window.requestAnimationFrame(drawFrame);
         return;
