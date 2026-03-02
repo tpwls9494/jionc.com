@@ -52,6 +52,7 @@ function Layout() {
     'inline-flex h-9 items-center rounded-lg px-3.5 text-sm font-medium text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-700';
 
   const isCommunityHub = location.pathname === '/community';
+  const isCommunityRoute = location.pathname.startsWith('/community');
   const isMarketplace = location.pathname.startsWith('/marketplace');
   const isMyPage = location.pathname.startsWith('/mypage');
   const avatarInitial = getAvatarInitial(user?.username);
@@ -61,7 +62,7 @@ function Layout() {
     ? 'min-h-screen bg-paper-100 bg-[radial-gradient(1400px_520px_at_50%_-120px,rgba(229,231,235,0.55),rgba(250,250,250,0.94)_44%,rgba(243,244,246,0.78)_100%)]'
     : 'min-h-screen bg-paper-100 bg-noise';
 
-  const contentContainerClassName = isCommunityHub
+  const contentContainerClassName = (isCommunityRoute || isMarketplace)
     ? 'max-w-6xl xl:max-w-[1240px] mx-auto px-6 lg:px-8'
     : 'max-w-6xl mx-auto px-6 lg:px-8';
 
