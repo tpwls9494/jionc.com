@@ -2,14 +2,18 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PostListPage from '../../components/community/PostListPage';
 import useCategoriesStore from '../../stores/categoriesStore';
+import useAuthStore from '../../stores/authStore';
 import { useSeo } from '../../utils/seo';
 
 const ALLOWED_WINDOWS = new Set(['24h', '7d', '30d']);
 
 function CommunityPostsPage() {
   const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
   const [searchParams] = useSearchParams();
   const { categories, fetchCategories } = useCategoriesStore();
+  const tabButtonBaseClass =
+    'inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-all duration-200 ease-out hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98]';
 
   const rawSort = searchParams.get('sort');
   const rawWindow = searchParams.get('window');
@@ -55,27 +59,21 @@ function CommunityPostsPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => navigate('/community')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-white text-ink-600 border-ink-200 hover:bg-paper-100"
+            className={`${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`}
           >
             전체
           </button>
           <button
             onClick={() => navigate('/community/recruits')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-white text-ink-600 border-ink-200 hover:bg-paper-100"
+            className={`${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`}
           >
             모집
-          </button>
-          <button
-            onClick={() => navigate('/community/following')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-white text-ink-600 border-ink-200 hover:bg-paper-100"
-          >
-            팔로잉
           </button>
           {sortedCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => navigate(`/community/${category.slug}`)}
-              className={`inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors ${
+              className={`${tabButtonBaseClass} ${
                 category.slug === 'notice'
                   ? 'bg-paper-100 text-ink-500 border-ink-200 hover:bg-paper-200'
                   : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
@@ -84,6 +82,14 @@ function CommunityPostsPage() {
               {category.name}
             </button>
           ))}
+          {token && (
+            <button
+              onClick={() => navigate('/community/following')}
+              className={`${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`}
+            >
+              팔로잉
+            </button>
+          )}
         </div>
       </section>
 

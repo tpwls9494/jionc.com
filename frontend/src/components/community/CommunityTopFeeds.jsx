@@ -79,7 +79,7 @@ function FeedRows({ posts, showPopularity = false, isLoading = false, categorySl
 
   if (visiblePosts.length === 0) {
     return (
-      <div className="flex min-h-[230px] items-center px-4 py-3 text-xs text-ink-400">
+      <div className="min-h-[230px] px-4 pt-4 pb-3 text-xs text-ink-400">
         표시할 글이 없습니다.
       </div>
     );

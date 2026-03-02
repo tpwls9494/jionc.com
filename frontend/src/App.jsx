@@ -82,7 +82,14 @@ function App() {
           <Route path="community" element={<CommunityHubPage />} />
           <Route path="community/posts" element={<CommunityPostsPage />} />
           <Route path="community/recruits" element={<RecruitPostsPage />} />
-          <Route path="community/following" element={<FollowingPostsPage />} />
+          <Route
+            path="community/following"
+            element={(
+              <ProtectedRoute>
+                <FollowingPostsPage />
+              </ProtectedRoute>
+            )}
+          />
           <Route path="users/:userId/followers" element={<UserFollowPage />} />
           <Route path="users/:userId/following" element={<UserFollowPage />} />
           <Route path="users/:userId/blocks" element={<UserFollowPage />} />

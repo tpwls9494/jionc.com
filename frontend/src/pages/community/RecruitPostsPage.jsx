@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { postsAPI } from '../../services/api';
 import useCategoriesStore from '../../stores/categoriesStore';
+import useAuthStore from '../../stores/authStore';
 import { useSeo } from '../../utils/seo';
 
 const PAGE_SIZE = 12;
@@ -53,11 +54,14 @@ const getDdayLabel = (deadlineAt) => {
 
 function RecruitPostsPage() {
   const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
   const { categories, fetchCategories } = useCategoriesStore();
   const [page, setPage] = useState(1);
   const [recruitType, setRecruitType] = useState('ALL');
   const [recruitStatus, setRecruitStatus] = useState('OPEN');
   const [recruitOnline, setRecruitOnline] = useState('ALL');
+  const tabButtonBaseClass =
+    'inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-all duration-200 ease-out hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98]';
 
   useSeo({
     title: '모집 게시판',
@@ -108,27 +112,21 @@ function RecruitPostsPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => navigate('/community')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-white text-ink-600 border-ink-200 hover:bg-paper-100"
+            className={`${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`}
           >
             전체
           </button>
           <button
             onClick={() => navigate('/community/recruits')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-ink-900 text-paper-50 border-ink-900"
+            className={`${tabButtonBaseClass} bg-ink-900 text-paper-50 border-ink-900`}
           >
             모집
-          </button>
-          <button
-            onClick={() => navigate('/community/following')}
-            className="inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors bg-white text-ink-600 border-ink-200 hover:bg-paper-100"
-          >
-            팔로잉
           </button>
           {sortedCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => navigate(`/community/${category.slug}`)}
-              className={`inline-flex items-center px-3 py-1.5 text-[12px] font-medium rounded-full border whitespace-nowrap transition-colors ${
+              className={`${tabButtonBaseClass} ${
                 category.slug === 'notice'
                   ? 'bg-paper-100 text-ink-500 border-ink-200 hover:bg-paper-200'
                   : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
@@ -137,6 +135,14 @@ function RecruitPostsPage() {
               {category.name}
             </button>
           ))}
+          {token && (
+            <button
+              onClick={() => navigate('/community/following')}
+              className={`${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`}
+            >
+              팔로잉
+            </button>
+          )}
         </div>
       </section>
 
