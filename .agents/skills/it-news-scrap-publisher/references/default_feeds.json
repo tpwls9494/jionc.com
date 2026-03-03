@@ -1,23 +1,27 @@
 [
   {
-    "name": "ZDNet Korea",
-    "url": "https://www.zdnet.co.kr/news/news.xml"
+    "name": "ETNews Korea",
+    "url": "https://rss.etnews.com/Section901.xml"
   },
   {
-    "name": "ITWorld Korea",
-    "url": "https://www.itworld.co.kr/rss/all.xml"
+    "name": "TechM",
+    "url": "https://www.techm.kr/rss/allArticle.xml"
   },
   {
-    "name": "Bloter",
-    "url": "https://www.bloter.net/feed"
+    "name": "AI Times",
+    "url": "https://www.aitimes.com/rss/allArticle.xml"
   },
   {
-    "name": "BoanNews",
-    "url": "https://www.boannews.com/media/news_rss.xml"
+    "name": "DataNet Korea",
+    "url": "https://www.datanet.co.kr/rss/allArticle.xml"
   },
   {
-    "name": "Hankyung IT",
-    "url": "https://www.hankyung.com/feed/it"
+    "name": "DailySecu",
+    "url": "https://www.dailysecu.com/rss/allArticle.xml"
+  },
+  {
+    "name": "ITBizNews",
+    "url": "https://www.itbiznews.com/rss/allArticle.xml"
   },
   {
     "name": "TechCrunch",
