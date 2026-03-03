@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { getMainNavCategories } from '../../utils/communityCategories';
 
 const tabButtonBaseClass =
-  'inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold leading-none whitespace-nowrap transition-colors duration-200 ease-out hover:bg-paper-100 active:scale-[0.98]';
+  'inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold leading-none whitespace-nowrap transition-colors duration-200 ease-out active:scale-[0.98]';
 
 function resolveTabClassName({ isActive, isNotice = false }) {
   if (isActive) {
-    return `${tabButtonBaseClass} bg-ink-900 text-paper-50 border-ink-900 shadow-sm`;
+    return `${tabButtonBaseClass} bg-ink-900 text-paper-50 border-ink-900 shadow-sm hover:bg-ink-900`;
   }
 
   if (isNotice) {
@@ -20,7 +20,7 @@ function resolveTabClassName({ isActive, isNotice = false }) {
 function CommunityTabs({
   categories = [],
   showFollowing = false,
-  activeTab = 'home',
+  activeTab = null,
   activeCategorySlug = null,
 }) {
   const navigate = useNavigate();
