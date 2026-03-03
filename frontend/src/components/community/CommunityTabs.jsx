@@ -5,13 +5,9 @@ import { getMainNavCategories } from '../../utils/communityCategories';
 const tabButtonBaseClass =
   'inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold leading-none whitespace-nowrap transition-colors duration-200 ease-out active:scale-[0.98]';
 
-function resolveTabClassName({ isActive, isNotice = false }) {
+function resolveTabClassName({ isActive }) {
   if (isActive) {
     return `${tabButtonBaseClass} bg-ink-900 text-paper-50 border-ink-900 shadow-sm hover:bg-ink-900`;
-  }
-
-  if (isNotice) {
-    return `${tabButtonBaseClass} bg-paper-100 text-ink-600 border-ink-200 hover:bg-paper-200`;
   }
 
   return `${tabButtonBaseClass} bg-white text-ink-600 border-ink-200 hover:bg-paper-100`;
@@ -44,7 +40,6 @@ function CommunityTabs({
               onClick={() => navigate(`/community/${noticeCategory.slug}`)}
               className={resolveTabClassName({
                 isActive: activeCategorySlug === noticeCategory.slug,
-                isNotice: true,
               })}
             >
               {noticeCategory.name}
@@ -64,7 +59,6 @@ function CommunityTabs({
               onClick={() => navigate(`/community/${category.slug}`)}
               className={resolveTabClassName({
                 isActive: activeCategorySlug === category.slug,
-                isNotice: category.slug === 'notice',
               })}
             >
               {category.name}
