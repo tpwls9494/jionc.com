@@ -43,8 +43,9 @@ function Register() {
       setSendingCode(true)
       await authAPI.sendSignupEmailCode(trimmedEmail)
       toast.success('인증 코드를 전송했습니다. 메일함을 확인해 주세요.')
-    } catch (_error) {
-      toast.success('인증 코드를 전송했습니다. 메일함을 확인해 주세요.')
+    } catch (sendError) {
+      const detail = sendError?.response?.data?.detail || '인증 코드 전송에 실패했습니다.'
+      toast.error(detail)
     } finally {
       setSendingCode(false)
     }

@@ -603,9 +603,11 @@ def send_signup_email_verification_code(
     if not _consume_signup_send_code_rate_limit(request, normalized_email):
         return SIGNUP_CODE_SEND_RESPONSE
 
-    # Do not disclose account existence.
     if crud_user.get_user_by_email(db, normalized_email):
-        return SIGNUP_CODE_SEND_RESPONSE
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="등록된 사용자입니다.",
+        )
 
     now = datetime.now(timezone.utc)
     db.query(SignupEmailVerification).filter(
