@@ -40,7 +40,7 @@ function CommunityHero() {
             커뮤니티
           </h1>
           <p className="mt-1 text-xs text-ink-500 max-w-md">
-            질문·회고·자료 공유, 그리고 스터디/모집까지.
+            질문·유머·자료 공유, 그리고 스터디/모집까지.
           </p>
           {shouldShowStatus && (
             <p className="mt-1.5 text-[11px] text-ink-400">
