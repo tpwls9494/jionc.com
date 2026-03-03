@@ -50,23 +50,21 @@ function VerifyEmail() {
     <div className="min-h-screen flex items-center justify-center bg-paper-100 bg-noise px-6 py-12">
       <div className="w-full max-w-lg rounded-2xl border border-ink-100 bg-white p-8 shadow-[0_20px_60px_-20px_rgba(20,20,20,0.2)]">
         <h1 className="font-display text-2xl font-bold text-ink-950">Email Verification</h1>
-        <p className="text-sm text-ink-500 mt-2">
-          We are confirming your token now. You can close this page after verification.
-        </p>
+        <p className="text-sm text-ink-500 mt-2">인증이 끝나면 메인으로 돌아가서 계속 이용하시면 됩니다.</p>
 
         <div className={`mt-6 rounded-xl border px-4 py-3 text-sm ${statusBadgeClass}`}>
           {message}
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Link to="/login" className="btn-accent px-4 py-2.5">
-            Go to Login
+          <Link to="/community" className="btn-accent px-4 py-2.5">
+            메인으로 가기
           </Link>
           <Link
-            to="/register"
+            to="/community?login=true"
             className="px-4 py-2.5 rounded-lg border border-ink-200 text-ink-700 hover:bg-ink-50 transition-colors"
           >
-            Create Account
+            로그인 열기
           </Link>
         </div>
       </div>

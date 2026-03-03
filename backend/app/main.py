@@ -158,8 +158,8 @@ app.include_router(
 
 
 def ensure_bootstrap_admin_user(db: Session) -> None:
-    email = settings.BOOTSTRAP_ADMIN_EMAIL
-    username = settings.BOOTSTRAP_ADMIN_USERNAME
+    email = (settings.BOOTSTRAP_ADMIN_EMAIL or "").strip().lower() or None
+    username = (settings.BOOTSTRAP_ADMIN_USERNAME or "").strip() or None
     password = settings.BOOTSTRAP_ADMIN_PASSWORD
 
     if not all([email, username, password]):

@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import useAuthStore from '../stores/authStore'
+import { authAPI } from '../services/api'
 
 function Register() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [registeredEmail, setRegisteredEmail] = useState('')
+  const [showSentNotice, setShowSentNotice] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const { register, isLoading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
 
@@ -20,13 +24,56 @@ function Register() {
     const success = await register(email, username, password)
     if (success) {
       toast.success('회원가입 완료! 이메일 인증 후 글/댓글 작성이 가능합니다.')
-      navigate('/login')
+      setRegisteredEmail(email.trim())
+      setShowSentNotice(true)
     }
   }
 
   const handleLoginClick = (e) => {
     e.preventDefault()
     navigate('/community?login=true')
+  }
+
+  const handleResendVerification = async () => {
+    if (!registeredEmail) return
+    try {
+      setIsResending(true)
+      await authAPI.resendVerification(registeredEmail)
+      toast.success('If the account exists, a verification email has been sent.')
+    } catch (_error) {
+      toast.success('If the account exists, a verification email has been sent.')
+    } finally {
+      setIsResending(false)
+    }
+  }
+
+  if (showSentNotice) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-paper-100 bg-noise px-6 py-12">
+        <div className="w-full max-w-md rounded-2xl border border-ink-100 bg-white p-8 shadow-[0_20px_60px_-20px_rgba(20,20,20,0.2)]">
+          <h1 className="font-display text-2xl font-bold text-ink-950">Check Your Email</h1>
+          <p className="mt-3 text-sm text-ink-600">
+            Verification link was sent to <span className="font-semibold">{registeredEmail}</span>.
+          </p>
+          <p className="mt-2 text-sm text-ink-600">
+            Email verification is required before writing posts/comments/uploads.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <button type="button" onClick={() => navigate('/community')} className="btn-accent px-4 py-2.5">
+              Go to Main
+            </button>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={isResending}
+              className="px-4 py-2.5 rounded-lg border border-ink-200 text-ink-700 hover:bg-ink-50 transition-colors disabled:opacity-60"
+            >
+              {isResending ? 'Resending...' : 'Resend Email'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -76,6 +123,7 @@ function Register() {
                 className="input-field"
                 placeholder="name@company.com"
               />
+              <p className="text-xs text-ink-500 mt-1">A verification email will be sent after signup.</p>
               <p className="text-xs text-ink-400 mt-1.5">이메일 형식으로 입력해주세요 (예: user@example.com)</p>
             </div>
 

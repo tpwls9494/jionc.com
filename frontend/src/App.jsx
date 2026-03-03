@@ -4,7 +4,6 @@ import { Toaster } from 'sonner'
 import useAuthStore from './stores/authStore'
 import Layout from './components/Layout'
 import { ConfirmProvider } from './components/ConfirmModal'
-import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
 import MyPage from './pages/MyPage'
@@ -71,8 +70,8 @@ function App() {
         }}
       />
       <Routes>
-        {/* Standalone auth pages (fallback) */}
-        <Route path="/login" element={<Login />} />
+        {/* Standalone auth pages */}
+        <Route path="/login" element={<Navigate to="/community?login=true" replace />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/oauth/callback" element={<OAuthCallback />} />

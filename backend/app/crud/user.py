@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate
@@ -10,12 +11,23 @@ def normalize_email(email: str) -> str:
     return (email or "").strip().lower()
 
 
+def normalize_username(username: str) -> str:
+    return (username or "").strip()
+
+
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == normalize_email(email)).first()
 
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
-    return db.query(User).filter(User.username == username).first()
+    normalized_username = normalize_username(username)
+    if not normalized_username:
+        return None
+    return (
+        db.query(User)
+        .filter(func.lower(User.username) == normalized_username.lower())
+        .first()
+    )
 
 
 def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
@@ -26,7 +38,7 @@ def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
     db_user = User(
         email=normalize_email(str(user.email)),
-        username=user.username,
+        username=normalize_username(user.username),
         hashed_password=hashed_password,
         has_local_password=True,
         email_verified=False,
@@ -47,7 +59,7 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
 
 
 def update_username(db: Session, user: User, username: str) -> User:
-    user.username = username
+    user.username = normalize_username(username)
     db.add(user)
     db.commit()
     db.refresh(user)

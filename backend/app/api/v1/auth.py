@@ -313,11 +313,16 @@ def _make_unique_username(db: Session, base: str) -> str:
     return f"user-{secrets.token_hex(5)}"
 
 
-def _get_or_create_oauth_user(db: Session, email: str, username_hint: str) -> User:
+def _get_or_create_oauth_user(
+    db: Session,
+    email: str,
+    username_hint: str,
+    email_verified: bool,
+) -> User:
     normalized_email = crud_user.normalize_email(email)
     user = crud_user.get_user_by_email(db, normalized_email)
     if user:
-        if not user.email_verified:
+        if email_verified and not user.email_verified:
             user.email_verified = True
             user.email_verified_at = datetime.now(timezone.utc)
             db.add(user)
@@ -332,8 +337,8 @@ def _get_or_create_oauth_user(db: Session, email: str, username_hint: str) -> Us
         username=username,
         hashed_password=get_password_hash(random_password),
         has_local_password=False,
-        email_verified=True,
-        email_verified_at=datetime.now(timezone.utc),
+        email_verified=email_verified,
+        email_verified_at=datetime.now(timezone.utc) if email_verified else None,
     )
     db.add(user)
     db.commit()
@@ -346,7 +351,7 @@ def _redirect_oauth_error(frontend_redirect: str, error_code: str) -> RedirectRe
     return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
 
-async def _fetch_google_profile(code: str, redirect_uri: str) -> tuple[str, str]:
+async def _fetch_google_profile(code: str, redirect_uri: str) -> tuple[str, str, bool]:
     async with httpx.AsyncClient(timeout=20) as client:
         token_response = await client.post(
             GOOGLE_TOKEN_URL,
@@ -373,29 +378,34 @@ async def _fetch_google_profile(code: str, redirect_uri: str) -> tuple[str, str]
 
     email = str(profile.get("email") or "").strip().lower()
     username_hint = str(profile.get("name") or profile.get("given_name") or email.split("@")[0] or "google-user")
-    return email, username_hint
+    email_verified = bool(profile.get("email_verified"))
+    return email, username_hint, email_verified
 
 
-def _pick_github_email(email_rows: list[dict]) -> str:
+def _pick_github_email(email_rows: list[dict]) -> tuple[str, bool]:
     if not isinstance(email_rows, list):
-        return ""
+        return "", False
 
     for row in email_rows:
         if isinstance(row, dict) and row.get("primary") and row.get("verified") and row.get("email"):
-            return str(row["email"]).strip().lower()
+            return str(row["email"]).strip().lower(), True
 
     for row in email_rows:
         if isinstance(row, dict) and row.get("verified") and row.get("email"):
-            return str(row["email"]).strip().lower()
+            return str(row["email"]).strip().lower(), True
+
+    for row in email_rows:
+        if isinstance(row, dict) and row.get("primary") and row.get("email"):
+            return str(row["email"]).strip().lower(), False
 
     for row in email_rows:
         if isinstance(row, dict) and row.get("email"):
-            return str(row["email"]).strip().lower()
+            return str(row["email"]).strip().lower(), False
 
-    return ""
+    return "", False
 
 
-async def _fetch_github_profile(code: str, redirect_uri: str) -> tuple[str, str]:
+async def _fetch_github_profile(code: str, redirect_uri: str) -> tuple[str, str, bool]:
     async with httpx.AsyncClient(timeout=20) as client:
         token_response = await client.post(
             GITHUB_TOKEN_URL,
@@ -427,7 +437,8 @@ async def _fetch_github_profile(code: str, redirect_uri: str) -> tuple[str, str]
         profile = user_response.json()
 
         email = str(profile.get("email") or "").strip().lower()
-        if not email:
+        email_verified = False
+        try:
             emails_response = await client.get(
                 GITHUB_EMAILS_URL,
                 headers={
@@ -437,15 +448,26 @@ async def _fetch_github_profile(code: str, redirect_uri: str) -> tuple[str, str]
                 },
             )
             emails_response.raise_for_status()
-            email = _pick_github_email(emails_response.json())
+            picked_email, picked_verified = _pick_github_email(emails_response.json())
+            if picked_email:
+                email = picked_email
+                email_verified = picked_verified
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to fetch GitHub verified email list: %s", exc)
 
     username_hint = str(profile.get("login") or profile.get("name") or email.split("@")[0] or "github-user")
-    return email, username_hint
+    return email, username_hint, email_verified
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     normalized_email = crud_user.normalize_email(str(user.email))
+    normalized_username = crud_user.normalize_username(user.username)
+    if len(normalized_username) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username must be at least 3 characters long",
+        )
 
     # Check if user already exists
     if crud_user.get_user_by_email(db, normalized_email):
@@ -453,7 +475,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
-    if crud_user.get_user_by_username(db, user.username):
+    if crud_user.get_user_by_username(db, normalized_username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already taken",
@@ -462,7 +484,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     # Create user
     db_user = crud_user.create_user(
         db,
-        user.model_copy(update={"email": normalized_email}),
+        user.model_copy(update={"email": normalized_email, "username": normalized_username}),
     )
 
     # Do not fail registration if email delivery fails; user can request resend.
@@ -505,7 +527,7 @@ def verify_email(payload: EmailVerificationRequest, db: Session = Depends(get_db
     if db_token.used_at is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This verification token has already been used",
+            detail="Invalid or expired verification token",
         )
 
     if _to_utc(db_token.expires_at) <= now:
@@ -629,9 +651,9 @@ async def oauth_callback(
 
     try:
         if provider == "google":
-            email, username_hint = await _fetch_google_profile(code, redirect_uri)
+            email, username_hint, provider_email_verified = await _fetch_google_profile(code, redirect_uri)
         else:
-            email, username_hint = await _fetch_github_profile(code, redirect_uri)
+            email, username_hint, provider_email_verified = await _fetch_github_profile(code, redirect_uri)
     except Exception as exc:  # noqa: BLE001
         logger.warning("OAuth callback failed for provider=%s: %s", provider, exc)
         return _redirect_oauth_error(frontend_redirect, "oauth_exchange_failed")
@@ -640,7 +662,12 @@ async def oauth_callback(
         return _redirect_oauth_error(frontend_redirect, "oauth_email_missing")
 
     try:
-        user = _get_or_create_oauth_user(db, email=email, username_hint=username_hint)
+        user = _get_or_create_oauth_user(
+            db,
+            email=email,
+            username_hint=username_hint,
+            email_verified=provider_email_verified,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.exception("OAuth user upsert failed for provider=%s email=%s: %s", provider, email, exc)
         return _redirect_oauth_error(frontend_redirect, "oauth_user_upsert_failed")
@@ -673,7 +700,7 @@ def update_me_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    new_username = profile.username.strip()
+    new_username = crud_user.normalize_username(profile.username)
 
     if len(new_username) < 3:
         raise HTTPException(
