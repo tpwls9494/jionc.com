@@ -1,33 +1,33 @@
 import { useEffect, useRef } from 'react';
 
 const DESKTOP_SETTINGS = {
-  density: 0.000108,
-  minPoints: 28,
-  maxPoints: 68,
-  linkDistance: 146,
-  speedScale: 1.15,
+  density: 0.00012,
+  minPoints: 32,
+  maxPoints: 80,
+  linkDistance: 156,
+  speedScale: 1.2,
   pixelRatioCap: 1.5,
-  frameInterval: 28,
+  frameInterval: 26,
 };
 
 const MOBILE_SETTINGS = {
-  density: 0.000068,
-  minPoints: 16,
-  maxPoints: 38,
-  linkDistance: 114,
-  speedScale: 0.95,
+  density: 0.000078,
+  minPoints: 18,
+  maxPoints: 44,
+  linkDistance: 122,
+  speedScale: 1,
   pixelRatioCap: 1.2,
-  frameInterval: 36,
+  frameInterval: 34,
 };
 
 const LOW_END_SETTINGS = {
-  density: 0.00004,
-  minPoints: 10,
-  maxPoints: 22,
-  linkDistance: 94,
-  speedScale: 0.68,
+  density: 0.000045,
+  minPoints: 12,
+  maxPoints: 26,
+  linkDistance: 100,
+  speedScale: 0.72,
   pixelRatioCap: 1,
-  frameInterval: 50,
+  frameInterval: 48,
 };
 
 function supportsReducedMotion() {
@@ -68,15 +68,15 @@ function getSettings() {
 
 function createPoint(width, height, speedScale) {
   const angle = Math.random() * Math.PI * 2;
-  const velocity = (Math.random() * 0.05 + 0.032) * speedScale;
+  const velocity = (Math.random() * 0.055 + 0.035) * speedScale;
 
   return {
     x: Math.random() * width,
     y: Math.random() * height,
     vx: Math.cos(angle) * velocity,
     vy: Math.sin(angle) * velocity,
-    radius: Math.random() * 1.2 + 0.8,
-    opacity: Math.random() * 0.085 + 0.085,
+    radius: Math.random() * 1.25 + 0.85,
+    opacity: Math.random() * 0.09 + 0.1,
   };
 }
 
@@ -197,13 +197,13 @@ function CommunityHeroConstellation() {
           if (distanceSq > maxDistanceSq) continue;
 
           const distance = Math.sqrt(distanceSq);
-          const alpha = (1 - distance / maxDistance) * 0.18;
+          const alpha = (1 - distance / maxDistance) * 0.22;
 
           ctx.beginPath();
           ctx.moveTo(from.x, from.y);
           ctx.lineTo(to.x, to.y);
-          ctx.lineWidth = 0.95;
-          ctx.strokeStyle = `rgba(107, 114, 128, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 1.05;
+          ctx.strokeStyle = `rgba(124, 130, 166, ${alpha.toFixed(3)})`;
           ctx.stroke();
         }
       }
@@ -212,7 +212,7 @@ function CommunityHeroConstellation() {
         const point = points[i];
         ctx.beginPath();
         ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(115, 115, 115, ${point.opacity.toFixed(3)})`;
+        ctx.fillStyle = `rgba(132, 138, 176, ${point.opacity.toFixed(3)})`;
         ctx.fill();
       }
 
