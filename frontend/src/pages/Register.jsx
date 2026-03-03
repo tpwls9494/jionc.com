@@ -8,6 +8,7 @@ import useAuthStore from '../stores/authStore'
 function Register() {
   const navigate = useNavigate()
   const { register, isLoading, error, clearError } = useAuthStore()
+  const inlineActionButtonClass = 'shrink-0 whitespace-nowrap rounded-lg border border-ink-200 px-2.5 py-1.5 text-xs font-medium leading-none text-ink-700 hover:bg-ink-50 disabled:opacity-60 disabled:cursor-not-allowed'
 
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -127,7 +128,7 @@ function Register() {
             <label htmlFor="email" className="block text-sm font-semibold text-ink-700 mb-2">
               이메일
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <input
                 id="email"
                 type="email"
@@ -138,14 +139,14 @@ function Register() {
                   setEmail(event.target.value)
                   if (error) clearError()
                 }}
-                className="input-field"
+                className="input-field flex-1 min-w-0"
                 placeholder="name@example.com"
               />
               <button
                 type="button"
                 onClick={handleSendCode}
                 disabled={sendingCode}
-                className="px-3 py-2 rounded-lg border border-ink-200 text-sm text-ink-700 hover:bg-ink-50 disabled:opacity-60"
+                className={inlineActionButtonClass}
               >
                 {sendingCode ? '전송 중' : '코드 전송'}
               </button>
@@ -159,20 +160,20 @@ function Register() {
             <label htmlFor="verification-code" className="block text-sm font-semibold text-ink-700 mb-2">
               인증 코드
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <input
                 id="verification-code"
                 type="text"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                className="input-field"
+                className="input-field flex-1 min-w-0"
                 placeholder="메일로 받은 코드 입력"
               />
               <button
                 type="button"
                 onClick={handleVerifyCode}
                 disabled={verifyingCode}
-                className="px-3 py-2 rounded-lg border border-ink-200 text-sm text-ink-700 hover:bg-ink-50 disabled:opacity-60"
+                className={inlineActionButtonClass}
               >
                 {verifyingCode ? '확인 중' : '인증 확인'}
               </button>
@@ -184,7 +185,7 @@ function Register() {
 
           <div>
             <label htmlFor="username" className="block text-sm font-semibold text-ink-700 mb-2">
-              아이디
+              닉네임
             </label>
             <input
               id="username"
@@ -199,7 +200,7 @@ function Register() {
                 if (error) clearError()
               }}
               className="input-field disabled:bg-ink-100 disabled:text-ink-500"
-              placeholder="사용할 아이디 입력"
+              placeholder="닉네임 입력"
             />
           </div>
 
