@@ -613,7 +613,7 @@ function PostDetail() {
 
               <button
                 onClick={handleXShare}
-                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-ink-900 bg-ink-950 px-2.5 py-1.5 text-[13px] font-medium text-white hover:bg-ink-900 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-[#2b3139] bg-[#111418] px-2.5 py-1.5 text-[13px] font-medium text-[#eceff4] hover:bg-[#1a2028] active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
               >
                 <span className="text-xs font-bold">X</span>
                 <span>트위터</span>

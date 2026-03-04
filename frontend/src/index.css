@@ -43,16 +43,16 @@
 
   html.dark {
     --color-ink-50: 10 10 10;
-    --color-ink-100: 20 20 20;
-    --color-ink-200: 34 34 34;
-    --color-ink-300: 52 52 52;
-    --color-ink-400: 94 94 94;
-    --color-ink-500: 148 148 148;
-    --color-ink-600: 193 193 193;
-    --color-ink-700: 221 221 221;
-    --color-ink-800: 232 232 232;
-    --color-ink-900: 241 241 241;
-    --color-ink-950: 250 250 250;
+    --color-ink-100: 18 18 18;
+    --color-ink-200: 30 30 30;
+    --color-ink-300: 48 48 48;
+    --color-ink-400: 90 90 90;
+    --color-ink-500: 140 140 140;
+    --color-ink-600: 176 176 176;
+    --color-ink-700: 198 198 198;
+    --color-ink-800: 212 212 212;
+    --color-ink-900: 224 224 224;
+    --color-ink-950: 236 236 236;
 
     --color-paper-50: 38 38 38;
     --color-paper-100: 24 24 24;
@@ -314,6 +314,10 @@
 
 html.dark .bg-white {
   background-color: rgb(var(--color-paper-50) / var(--tw-bg-opacity, 1));
+}
+
+html.dark .text-white {
+  color: rgb(232 234 238 / var(--tw-text-opacity, 1));
 }
 
 /* Reduced motion preference */
