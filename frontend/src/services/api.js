@@ -47,9 +47,8 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
   getOAuthProviders: () => api.get('/auth/oauth/providers'),
-  getOAuthStartUrl: (provider, redirectUrl, nextPath = '/community') => {
+  getOAuthStartUrl: (provider, nextPath = '/community') => {
     const params = new URLSearchParams({
-      redirect: redirectUrl,
       next: nextPath,
     });
     return `${API_BASE_URL}/api/v1/auth/oauth/${provider}/start?${params.toString()}`;

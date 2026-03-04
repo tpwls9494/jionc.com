@@ -57,17 +57,12 @@ function SocialLoginButtons({ className = '' }) {
     return `${window.location.pathname}${window.location.search}${window.location.hash}` || '/community';
   }, []);
 
-  const redirectUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/oauth/callback`;
-  }, []);
-
   const startOAuth = (provider) => {
     if (!providers[provider]) {
       toast.error(`${provider} 소셜 로그인 설정이 아직 활성화되지 않았습니다.`);
       return;
     }
-    const startUrl = authAPI.getOAuthStartUrl(provider, redirectUrl, nextPath);
+    const startUrl = authAPI.getOAuthStartUrl(provider, nextPath);
     window.location.href = startUrl;
   };
 

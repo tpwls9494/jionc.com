@@ -38,9 +38,10 @@ Thumbs.db
 
 # Secrets (actual .env with real values)
 .env
-!.env.production
+backend/.env
+.env.production
+backend/.env.production
 !backend/.env.example
-!backend/.env.production
 
 # Logs
 *.log

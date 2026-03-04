@@ -42,9 +42,12 @@ function OAuthCallback() {
     let mounted = true;
 
     const processCallback = async () => {
-      const token = searchParams.get('token');
-      const nextPath = normalizeNextPath(searchParams.get('next'));
-      const provider = searchParams.get('provider') || 'oauth';
+      const hashParams = new URLSearchParams(
+        typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : ''
+      );
+      const token = searchParams.get('token') || hashParams.get('token');
+      const nextPath = normalizeNextPath(searchParams.get('next') || hashParams.get('next'));
+      const provider = searchParams.get('provider') || hashParams.get('provider') || 'oauth';
 
       if (!token) {
         if (mounted) {
@@ -55,6 +58,9 @@ function OAuthCallback() {
 
       try {
         setToken(token);
+        if (typeof window !== 'undefined' && window.location.hash) {
+          window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+        }
         await fetchUser();
         trackAnalyticsEvent('login_success', {
           method: 'oauth',

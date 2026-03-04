@@ -382,18 +382,17 @@ def _sanitize_next_path(raw_next: str | None) -> str:
     return next_path[:500]
 
 
-def _sanitize_frontend_redirect(request: Request, raw_redirect: str | None) -> str:
-    fallback = settings.OAUTH_FRONTEND_DEFAULT_REDIRECT
-    candidate = (raw_redirect or "").strip() or fallback
-    parsed = urlparse(candidate)
+def _sanitize_frontend_redirect(request: Request) -> str:
+    fallback = (settings.OAUTH_FRONTEND_DEFAULT_REDIRECT or "").strip()
+    parsed = urlparse(fallback)
 
     if parsed.scheme in {"http", "https"} and parsed.netloc:
-        return candidate
+        return fallback
 
-    if candidate.startswith("/"):
-        return f"{_build_public_origin(request)}{candidate}"
+    if fallback.startswith("/"):
+        return f"{_build_public_origin(request)}{fallback}"
 
-    return fallback
+    return f"{_build_public_origin(request)}/oauth/callback"
 
 
 def _append_query_params(url: str, params: dict[str, str]) -> str:
@@ -403,11 +402,17 @@ def _append_query_params(url: str, params: dict[str, str]) -> str:
     return urlunparse(parsed._replace(query=urlencode(query)))
 
 
-def _encode_oauth_state(provider: str, frontend_redirect: str, next_path: str) -> str:
+def _append_fragment_params(url: str, params: dict[str, str]) -> str:
+    parsed = urlparse(url)
+    fragment = dict(parse_qsl(parsed.fragment, keep_blank_values=True))
+    fragment.update(params)
+    return urlunparse(parsed._replace(fragment=urlencode(fragment)))
+
+
+def _encode_oauth_state(provider: str, next_path: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "provider": provider,
-        "frontend_redirect": frontend_redirect,
         "next": next_path,
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(seconds=OAUTH_STATE_TTL_SECONDS)).timestamp()),
@@ -810,7 +815,6 @@ def get_oauth_providers():
 def oauth_start(
     provider: str,
     request: Request,
-    redirect: str | None = Query(default=None, description="Frontend callback URL"),
     next: str | None = Query(default="/community", description="Post-login path in frontend"),
 ):
     if provider not in {"google", "github"}:
@@ -819,10 +823,10 @@ def oauth_start(
     if not _oauth_provider_enabled(provider):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"{provider} OAuth is not configured")
 
-    frontend_redirect = _sanitize_frontend_redirect(request, redirect)
+    frontend_redirect = _sanitize_frontend_redirect(request)
     next_path = _sanitize_next_path(next)
     redirect_uri = _build_backend_redirect_uri(request, provider)
-    state = _encode_oauth_state(provider, frontend_redirect, next_path)
+    state = _encode_oauth_state(provider, next_path)
 
     if provider == "google":
         authorize_url = f"{GOOGLE_AUTH_URL}?{urlencode({'client_id': settings.GOOGLE_OAUTH_CLIENT_ID, 'redirect_uri': redirect_uri, 'response_type': 'code', 'scope': 'openid email profile', 'state': state, 'prompt': 'select_account'})}"
@@ -841,7 +845,7 @@ async def oauth_callback(
     state: str | None = Query(default=None),
     error: str | None = Query(default=None),
 ):
-    fallback_frontend_redirect = _sanitize_frontend_redirect(request, None)
+    fallback_frontend_redirect = _sanitize_frontend_redirect(request)
 
     if provider not in {"google", "github"}:
         return _redirect_oauth_error(fallback_frontend_redirect, "unsupported_provider")
@@ -857,7 +861,7 @@ async def oauth_callback(
     except HTTPException:
         return _redirect_oauth_error(fallback_frontend_redirect, "oauth_invalid_state")
 
-    frontend_redirect = _sanitize_frontend_redirect(request, str(state_payload.get("frontend_redirect") or ""))
+    frontend_redirect = _sanitize_frontend_redirect(request)
     next_path = _sanitize_next_path(str(state_payload.get("next") or "/community"))
 
     if state_payload.get("provider") != provider:
@@ -897,7 +901,7 @@ async def oauth_callback(
         expires_delta=access_token_expires,
     )
 
-    success_redirect = _append_query_params(
+    success_redirect = _append_fragment_params(
         frontend_redirect,
         {
             "token": access_token,
