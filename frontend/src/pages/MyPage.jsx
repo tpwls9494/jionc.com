@@ -285,7 +285,11 @@ function MyPage() {
               />
             </div>
 
-            <button type="submit" disabled={isSavingNickname} className="btn-accent w-full">
+            <button
+              type="submit"
+              disabled={isSavingNickname}
+              className="btn-accent w-full dark:bg-[#283548] dark:text-[#edf2f9] dark:hover:bg-[#32435b]"
+            >
               {isSavingNickname ? '저장 중...' : '닉네임 저장'}
             </button>
           </form>
