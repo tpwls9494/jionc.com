@@ -545,8 +545,8 @@ function PostDetail() {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3 sm:items-center">
               <div className="w-8 h-8 rounded-full bg-ink-200 overflow-hidden flex items-center justify-center">
                 {postProfileImageUrl ? (
                   <img
@@ -560,8 +560,8 @@ function PostDetail() {
                   </span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <Link
                     to={`/users/${post.user_id}/followers`}
                     className="text-sm font-semibold text-ink-800 hover:text-ink-950 hover:underline underline-offset-2"
@@ -587,7 +587,7 @@ function PostDetail() {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-ink-400">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-400">
                   <span>
                     {new Intl.DateTimeFormat('ko-KR', {
                       dateStyle: 'medium',
@@ -600,10 +600,10 @@ function PostDetail() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex w-full items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide sm:w-auto sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0">
               <button
                 onClick={handleCopyLink}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-white text-ink-600 border border-ink-200 hover:bg-paper-100 active:scale-95"
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-2.5 py-1.5 text-[13px] font-medium text-ink-600 hover:bg-paper-100 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 010 6.364l-1.59 1.59a4.5 4.5 0 01-6.364-6.364l1.591-1.59m6.363 6.364a4.5 4.5 0 010-6.364l1.59-1.59a4.5 4.5 0 016.364 6.364l-1.59 1.59" />
@@ -613,7 +613,7 @@ function PostDetail() {
 
               <button
                 onClick={handleXShare}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-ink-950 text-white border border-ink-900 hover:bg-ink-900 active:scale-95"
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border border-ink-900 bg-ink-950 px-2.5 py-1.5 text-[13px] font-medium text-white hover:bg-ink-900 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
               >
                 <span className="text-xs font-bold">X</span>
                 <span>트위터</span>
@@ -623,7 +623,7 @@ function PostDetail() {
                 <button
                   onClick={handleOpenApplyModal}
                   disabled={applyRecruitMutation.isPending || isRecruitClosed}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border active:scale-95 ${
+                  className={`flex-shrink-0 flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium active:scale-95 sm:px-4 sm:py-2 sm:text-sm ${
                     isRecruitClosed
                       ? 'bg-paper-200 text-ink-400 border-ink-200 cursor-not-allowed'
                       : 'bg-ink-900 text-paper-50 border-ink-900 hover:bg-ink-800'
@@ -637,7 +637,7 @@ function PostDetail() {
                 onClick={handleBookmarkToggle}
                 disabled={toggleBookmarkMutation.isPending}
                 aria-label={post.is_bookmarked ? '북마크 해제' : '북마크 추가'}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium active:scale-95 ${
+                className={`flex-shrink-0 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium active:scale-95 sm:px-3.5 sm:py-2 sm:text-sm ${
                   post.is_bookmarked
                     ? 'bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200'
                     : 'bg-paper-200 text-ink-500 border border-ink-200 hover:bg-paper-300 hover:text-ink-700'
@@ -653,7 +653,7 @@ function PostDetail() {
                 onClick={handleLikeToggle}
                 disabled={likeMutation.isPending || unlikeMutation.isPending}
                 aria-label={post.is_liked ? '좋아요 취소' : '좋아요'}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium active:scale-95 ${
+                className={`flex-shrink-0 flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium active:scale-95 sm:px-4 sm:py-2 sm:text-sm ${
                   post.is_liked
                     ? 'bg-ink-100 text-ink-800 border border-ink-300 hover:bg-ink-200'
                     : 'bg-paper-200 text-ink-500 border border-ink-200 hover:bg-paper-300 hover:text-ink-700'
