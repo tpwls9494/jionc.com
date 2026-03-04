@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+const colorVar = (name) => `rgb(var(${name}) / <alpha-value>)`;
+
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,30 +11,30 @@ export default {
     extend: {
       colors: {
         ink: {
-          50: '#fafafa',
-          100: '#f5f5f5',
-          200: '#e5e5e5',
-          300: '#d4d4d4',
-          400: '#a3a3a3',
-          500: '#737373',
-          600: '#525252',
-          700: '#404040',
-          800: '#262626',
-          900: '#171717',
-          950: '#0a0a0a',
+          50: colorVar('--color-ink-50'),
+          100: colorVar('--color-ink-100'),
+          200: colorVar('--color-ink-200'),
+          300: colorVar('--color-ink-300'),
+          400: colorVar('--color-ink-400'),
+          500: colorVar('--color-ink-500'),
+          600: colorVar('--color-ink-600'),
+          700: colorVar('--color-ink-700'),
+          800: colorVar('--color-ink-800'),
+          900: colorVar('--color-ink-900'),
+          950: colorVar('--color-ink-950'),
         },
         paper: {
-          50: '#ffffff',
-          100: '#fafafa',
-          200: '#f5f5f5',
-          300: '#ebebeb',
-          400: '#e0e0e0',
+          50: colorVar('--color-paper-50'),
+          100: colorVar('--color-paper-100'),
+          200: colorVar('--color-paper-200'),
+          300: colorVar('--color-paper-300'),
+          400: colorVar('--color-paper-400'),
         },
         accent: {
-          DEFAULT: '#6b7280',
-          light: '#9ca3af',
-          dark: '#4b5563',
-          glow: '#f3f4f6',
+          DEFAULT: colorVar('--color-accent'),
+          light: colorVar('--color-accent-light'),
+          dark: colorVar('--color-accent-dark'),
+          glow: colorVar('--color-accent-glow'),
         },
       },
       fontFamily: {

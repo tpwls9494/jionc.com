@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import useAuthStore from '../stores/authStore';
+import useThemeStore, { THEME_DARK, THEME_LIGHT } from '../stores/themeStore';
 import { analyticsAPI, authAPI, bookmarksAPI } from '../services/api';
 import { getAvatarInitial, resolveProfileImageUrl } from '../utils/userProfile';
 
@@ -20,6 +21,8 @@ const getErrorMessage = (error, fallback) => error?.response?.data?.detail || fa
 
 function MyPage() {
   const { user, token, fetchUser, setUser } = useAuthStore();
+  const theme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
 
   const [username, setUsername] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -59,6 +62,7 @@ function MyPage() {
     staleTime: 1000 * 60 * 3,
   });
   const canChangePassword = user?.has_local_password !== false;
+  const isDarkMode = theme === THEME_DARK;
   const analyticsSummary = analyticsSummaryData?.data;
   const analyticsEventCounts = useMemo(() => {
     const counts = {};
@@ -178,6 +182,12 @@ function MyPage() {
   }
 
   const bookmarks = bookmarksData?.data?.bookmarks || [];
+  const themeButtonBaseClass = 'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200';
+
+  const handleThemeChange = (nextTheme) => {
+    if (nextTheme === theme) return;
+    setTheme(nextTheme);
+  };
 
   return (
     <section className="max-w-5xl mx-auto space-y-6">
@@ -192,7 +202,7 @@ function MyPage() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link
             to={`/users/${user.id}/followers`}
-            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full border border-ink-200 bg-white text-ink-600 hover:bg-paper-100"
+            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full border border-ink-200 bg-paper-50 text-ink-600 hover:bg-paper-100"
           >
             내 팔로우 보기
           </Link>
@@ -281,6 +291,45 @@ function MyPage() {
           </form>
         </article>
       </div>
+
+      <article className="card p-6 md:p-7">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-semibold text-ink-900">화면 테마</h2>
+            <p className="mt-1 text-sm text-ink-500">
+              라이트 모드와 다크 모드를 선택할 수 있습니다. 선택한 값은 이 브라우저에 저장됩니다.
+            </p>
+          </div>
+          <span className="badge-default">{isDarkMode ? '다크 모드' : '라이트 모드'}</span>
+        </div>
+
+        <div className="mt-5 inline-flex w-full max-w-xs rounded-xl border border-ink-200 bg-paper-200 p-1">
+          <button
+            type="button"
+            onClick={() => handleThemeChange(THEME_LIGHT)}
+            aria-pressed={!isDarkMode}
+            className={`${themeButtonBaseClass} ${
+              !isDarkMode
+                ? 'bg-paper-50 text-ink-900 shadow-soft'
+                : 'text-ink-500 hover:bg-paper-300 hover:text-ink-800'
+            }`}
+          >
+            라이트
+          </button>
+          <button
+            type="button"
+            onClick={() => handleThemeChange(THEME_DARK)}
+            aria-pressed={isDarkMode}
+            className={`${themeButtonBaseClass} ${
+              isDarkMode
+                ? 'bg-paper-50 text-ink-900 shadow-soft'
+                : 'text-ink-500 hover:bg-paper-300 hover:text-ink-800'
+            }`}
+          >
+            다크
+          </button>
+        </div>
+      </article>
 
       {canChangePassword && (
         <article className="card p-6 md:p-7">
@@ -382,7 +431,7 @@ function MyPage() {
                 {TRACKED_EVENTS.map(([eventName, label]) => (
                   <div
                     key={eventName}
-                    className="rounded-lg border border-ink-100 bg-white px-3 py-2 flex items-center justify-between"
+                    className="rounded-lg border border-ink-100 bg-paper-50 px-3 py-2 flex items-center justify-between"
                   >
                     <p className="text-sm text-ink-600">{label}</p>
                     <p className="text-sm font-semibold text-ink-900">
@@ -417,7 +466,7 @@ function MyPage() {
             <Link
               key={item.id}
               to={`/posts/${item.post_id}`}
-              className="block rounded-lg border border-ink-100 hover:border-ink-300 bg-paper-50 hover:bg-white px-3 py-2.5 transition-colors"
+              className="block rounded-lg border border-ink-100 hover:border-ink-300 bg-paper-50 hover:bg-paper-100 px-3 py-2.5 transition-colors"
             >
               <p className="text-sm font-semibold text-ink-900 truncate">{item.post?.title}</p>
               <p className="text-xs text-ink-500 mt-1">

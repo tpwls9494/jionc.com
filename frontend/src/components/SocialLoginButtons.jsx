@@ -82,9 +82,9 @@ function SocialLoginButtons({ className = '' }) {
           type="button"
           onClick={() => startOAuth('google')}
           disabled={!providers.google}
-          className="group inline-flex items-center justify-center gap-2 rounded-xl border border-[#DADCE0] bg-white px-3 py-2.5 text-sm font-semibold text-[#3C4043] shadow-sm transition hover:bg-[#F8F9FA] disabled:cursor-not-allowed disabled:opacity-40"
+          className="group inline-flex items-center justify-center gap-2 rounded-xl border border-[#DADCE0] bg-[#ffffff] px-3 py-2.5 text-sm font-semibold text-[#3C4043] shadow-sm transition hover:bg-[#F8F9FA] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#E6E8EB] bg-white">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#E6E8EB] bg-[#ffffff]">
             <GoogleIcon />
           </span>
           <span className="leading-none">Google로 계속하기</span>
@@ -96,7 +96,7 @@ function SocialLoginButtons({ className = '' }) {
           disabled={!providers.github}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1f2328] bg-[#24292f] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f2328] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#1f2328]">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffffff] text-[#1f2328]">
             <GitHubIcon />
           </span>
           <span className="leading-none">GitHub로 계속하기</span>

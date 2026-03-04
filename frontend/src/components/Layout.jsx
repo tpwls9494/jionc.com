@@ -61,7 +61,7 @@ function Layout() {
   const profileImageUrl = resolveProfileImageUrl(user?.profile_image_url);
 
   const shellClassName = isCommunityHub
-    ? 'min-h-screen bg-paper-100 bg-[radial-gradient(1400px_520px_at_50%_-120px,rgba(229,231,235,0.55),rgba(250,250,250,0.94)_44%,rgba(243,244,246,0.78)_100%)]'
+    ? 'min-h-screen bg-paper-100 bg-[radial-gradient(1400px_520px_at_50%_-120px,rgba(229,231,235,0.55),rgba(250,250,250,0.94)_44%,rgba(243,244,246,0.78)_100%)] dark:bg-[radial-gradient(1400px_520px_at_50%_-120px,rgba(94,94,94,0.35),rgba(24,24,24,0.95)_44%,rgba(18,18,18,0.85)_100%)]'
     : 'min-h-screen bg-paper-100 bg-noise';
 
   const contentContainerClassName = (isCommunityArea || isMarketplace)

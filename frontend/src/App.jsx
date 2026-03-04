@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import useAuthStore from './stores/authStore'
+import useThemeStore, { THEME_DARK } from './stores/themeStore'
 import Layout from './components/Layout'
 import { ConfirmProvider } from './components/ConfirmModal'
 import Register from './pages/Register'
@@ -47,6 +48,8 @@ function MyBlocksRedirect() {
 
 function App() {
   const { token, fetchUser } = useAuthStore()
+  const theme = useThemeStore((state) => state.theme)
+  const isDarkTheme = theme === THEME_DARK
 
   useEffect(() => {
     if (token) {
@@ -57,13 +60,18 @@ function App() {
   return (
     <ConfirmProvider>
       <Toaster
+        theme={theme === THEME_DARK ? 'dark' : 'light'}
         position="top-center"
         toastOptions={{
           style: {
             fontFamily: '"Pretendard", "Noto Sans KR", system-ui, sans-serif',
             borderRadius: '0.875rem',
-            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1), 0 4px 25px -5px rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.06)',
+            boxShadow: isDarkTheme
+              ? '0 16px 44px -16px rgba(0,0,0,0.75), 0 4px 20px -6px rgba(0,0,0,0.55)'
+              : '0 10px 40px -10px rgba(0,0,0,0.1), 0 4px 25px -5px rgba(0,0,0,0.05)',
+            border: isDarkTheme ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+            background: isDarkTheme ? '#191919' : '#ffffff',
+            color: isDarkTheme ? '#f1f1f1' : '#171717',
             padding: '14px 18px',
             fontSize: '14px',
           },
