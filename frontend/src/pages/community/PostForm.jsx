@@ -130,6 +130,13 @@ const escapeHtml = (value = '') => (
     .replace(/'/g, '&#39;')
 )
 
+const preserveWhitespaceInHtml = (value = '') => {
+  const escaped = escapeHtml(String(value || '').replace(/\t/g, '    '))
+  const withLeadingSpaces = escaped.replace(/^ +/gm, (match) => '&nbsp;'.repeat(match.length))
+  const withTrailingSpaces = withLeadingSpaces.replace(/ +$/gm, (match) => '&nbsp;'.repeat(match.length))
+  return withTrailingSpaces.replace(/ {2,}/g, (match) => ` ${'&nbsp;'.repeat(match.length - 1)}`)
+}
+
 const plainTextToEditorHtml = (value = '') => {
   const normalized = String(value || '').replace(/\r\n/g, '\n').trim()
   if (!normalized) {
@@ -137,8 +144,65 @@ const plainTextToEditorHtml = (value = '') => {
   }
   return normalized
     .split('\n')
-    .map((line) => `<p>${escapeHtml(line) || '<br>'}</p>`)
+    .map((line) => `<p>${preserveWhitespaceInHtml(line) || '<br>'}</p>`)
     .join('')
+}
+
+const AI_TEXT_BLOCK_TAGS = new Set([
+  'p', 'div', 'li', 'blockquote', 'pre',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'ul', 'ol', 'figure', 'figcaption',
+])
+
+const extractEditorTextForAi = (html = '') => {
+  const source = String(html || '')
+  if (!source.trim()) return ''
+
+  const parser = new DOMParser()
+  const parsed = parser.parseFromString(source, 'text/html')
+  const chunks = []
+
+  const ensureLineBreak = () => {
+    const lastChunk = chunks[chunks.length - 1] || ''
+    if (!lastChunk.endsWith('\n')) {
+      chunks.push('\n')
+    }
+  }
+
+  const walkNode = (node) => {
+    if (!node) return
+    if (node.nodeType === Node.TEXT_NODE) {
+      chunks.push(node.textContent || '')
+      return
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+
+    const tagName = (node.tagName || '').toLowerCase()
+    if (tagName === 'br') {
+      chunks.push('\n')
+      return
+    }
+
+    const isBlock = AI_TEXT_BLOCK_TAGS.has(tagName)
+    if (isBlock && chunks.length > 0) {
+      ensureLineBreak()
+    }
+
+    Array.from(node.childNodes || []).forEach(walkNode)
+
+    if (isBlock) {
+      ensureLineBreak()
+    }
+  }
+
+  Array.from(parsed.body.childNodes || []).forEach(walkNode)
+
+  return chunks
+    .join('')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 const createUploadToken = () => (
@@ -1172,7 +1236,7 @@ function PostForm() {
     if (aiBusyAction) return
 
     const serializedContent = serializeContentWithPlaceholders()
-    const plainText = extractPlainTextFromRichContent(serializedContent).trim()
+    const plainText = extractEditorTextForAi(serializedContent)
     const trimmedTitle = title.trim()
 
     if (!plainText && !trimmedTitle) {

@@ -316,7 +316,7 @@ def _handle_editor_action(
         input_hash=input_hash,
     )
 
-    cache_key = f"editor:{action}:{input_hash}"
+    cache_key = f"editor:v2:{action}:{input_hash}"
     cached = ai_service.get_cached(cache_key)
     if cached:
         cached_payload = {**cached, "cached": True}
@@ -340,6 +340,29 @@ def _handle_editor_action(
         category_slug=payload.category_slug,
     )
     elapsed_ms = (time.perf_counter() - start) * 1000
+
+    if model_result.status != "success":
+        _safe_log(
+            db,
+            user_id=current_user.id if current_user else None,
+            endpoint=f"editor:{action}",
+            source=payload.source,
+            intent=INTENT_EDITOR_HELP,
+            action=action,
+            input_hash=input_hash,
+            status_text=model_result.status,
+            model=model_result.model,
+            latency_ms=round(elapsed_ms + model_result.latency_ms, 2),
+            prompt_tokens=model_result.prompt_tokens,
+            completion_tokens=model_result.completion_tokens,
+            total_tokens=model_result.total_tokens,
+            cost_usd=model_result.cost_usd,
+            error_message=model_result.error_message,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI 생성 결과를 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        )
 
     response_payload = {
         "source": payload.source,

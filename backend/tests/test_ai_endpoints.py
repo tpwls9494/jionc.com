@@ -35,7 +35,7 @@ def test_editor_tags_response_is_json_shape():
     )
     assert isinstance(payload["tags"], list)
     assert len(payload["tags"]) >= 1
-    assert meta.status in {"success", "disabled", "failed", "timeout"}
+    assert meta.status in {"success", "disabled", "failed", "timeout", "invalid_json", "invalid_schema"}
 
 
 def test_editor_request_rejects_empty_text_and_title():

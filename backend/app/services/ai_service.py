@@ -641,12 +641,44 @@ class AiService:
         category_slug: str | None,
     ) -> str:
         schema = self._editor_schema_hint(action)
+        action_guideline = self._editor_action_guideline(action)
         return (
             f"action={action}\n"
             f"category_slug={category_slug or ''}\n"
             f"title={title or ''}\n"
             f"text={text}\n\n"
+            f"Action guideline:\n{action_guideline}\n\n"
             f"Return JSON only with schema:\n{schema}"
+        )
+
+    @staticmethod
+    def _editor_action_guideline(action: str) -> str:
+        if action == "proofread":
+            return (
+                "- Correct grammar/spelling with minimal edits.\n"
+                "- Preserve line breaks and paragraph boundaries.\n"
+                "- Do not remove indentation unless clearly erroneous."
+            )
+        if action == "title":
+            return (
+                "- Generate specific Korean titles reflecting key topics.\n"
+                "- Avoid vague patterns and ban clich\u00e9 endings.\n"
+                "- Return 3-5 distinct options."
+            )
+        if action == "template":
+            return (
+                "- Build a practical structure adapted to the given text/topic.\n"
+                "- Include concrete section headings and checklist items.\n"
+                "- Avoid abstract placeholder-only output."
+            )
+        if action == "tags":
+            return (
+                "- Return 5-8 concise tags without #.\n"
+                "- Prefer technical keywords and remove duplicates."
+            )
+        return (
+            "- Mask only sensitive values (email/phone/url/identifier).\n"
+            "- Preserve non-sensitive wording and line breaks."
         )
 
     def _editor_schema_hint(self, action: str) -> str:
@@ -723,7 +755,19 @@ class AiService:
             return {"revised_text": revised_text, "changes": changes, "note": note}
         if action == "title":
             titles_raw = payload.get("titles", [])
-            titles = [str(item).strip() for item in titles_raw if str(item).strip()][:5]
+            forbidden_phrases = {"경험 공유", "시작 가이드", "진행기와 배운 점"}
+            titles: list[str] = []
+            for item in titles_raw:
+                normalized = str(item).strip()
+                if not normalized:
+                    continue
+                if any(phrase in normalized for phrase in forbidden_phrases):
+                    continue
+                if re.fullmatch(r"[0-9\W_]+", normalized):
+                    continue
+                titles.append(normalized)
+            # De-duplicate while preserving order.
+            titles = list(dict.fromkeys(titles))[:5]
             if not titles:
                 return None
             rationale = str(payload.get("rationale", "")).strip() or None
