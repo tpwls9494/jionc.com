@@ -5,8 +5,10 @@ import { toast } from 'sonner'
 import { aiAPI, postsAPI, filesAPI } from '../../services/api'
 import useCategoriesStore from '../../stores/categoriesStore'
 import useAuthStore from '../../stores/authStore'
+import MarkdownContent from '../../components/community/MarkdownContent'
 import {
   extractPlainTextFromRichContent,
+  isLikelyHtml,
   normalizeStoredContentForEditor,
   sanitizeRichHtml,
 } from '../../utils/richContent'
@@ -210,6 +212,78 @@ const extractEditorTextForAi = (html = '') => {
     .trim()
 }
 
+const extractEditorMarkdownText = (html = '') => {
+  const source = String(html || '')
+  if (!source.trim()) return ''
+
+  const parser = new DOMParser()
+  const parsed = parser.parseFromString(source, 'text/html')
+  const chunks = []
+
+  const ensureLineBreak = () => {
+    const lastChunk = chunks[chunks.length - 1] || ''
+    if (!lastChunk.endsWith('\n')) {
+      chunks.push('\n')
+    }
+  }
+
+  const walkNode = (node) => {
+    if (!node) return
+    if (node.nodeType === Node.TEXT_NODE) {
+      chunks.push(node.textContent || '')
+      return
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+
+    const tagName = (node.tagName || '').toLowerCase()
+    if (tagName === 'br') {
+      chunks.push('\n')
+      return
+    }
+
+    if (tagName === 'img') {
+      const src = String(node.getAttribute('src') || '').trim()
+      if (!src) return
+      const alt = String(node.getAttribute('alt') || '')
+      const escapedAlt = alt.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]')
+      const widthHint = getImageWidthHintFromNode(node)
+      const widthTitle = widthHint ? ` "w=${widthHint}"` : ''
+      chunks.push(`![${escapedAlt}](${src}${widthTitle})`)
+      return
+    }
+
+    if (tagName === 'a') {
+      const href = String(node.getAttribute('href') || '').trim()
+      if (href) {
+        const labelSource = String(node.textContent || href).replace(/\s+/g, ' ').trim() || href
+        const escapedLabel = labelSource.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]')
+        chunks.push(`[${escapedLabel}](${href})`)
+        return
+      }
+    }
+
+    const isBlock = AI_TEXT_BLOCK_TAGS.has(tagName)
+    if (isBlock && chunks.length > 0) {
+      ensureLineBreak()
+    }
+
+    Array.from(node.childNodes || []).forEach(walkNode)
+
+    if (isBlock) {
+      ensureLineBreak()
+    }
+  }
+
+  Array.from(parsed.body.childNodes || []).forEach(walkNode)
+
+  return chunks
+    .join('')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 const createUploadToken = () => (
   `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 )
@@ -220,6 +294,34 @@ const replaceUploadPlaceholders = (baseContent, replacements) => (
     baseContent,
   )
 )
+
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const parseImageWidthPixels = (rawWidth = '') => {
+  const normalized = String(rawWidth || '').trim()
+  if (!normalized) return ''
+
+  const parsed = Number.parseFloat(normalized)
+  if (!Number.isFinite(parsed)) return ''
+
+  const rounded = Math.round(parsed)
+  if (rounded < 40 || rounded > 4000) return ''
+
+  return String(rounded)
+}
+
+const getImageWidthHintFromNode = (imageNode) => {
+  if (!imageNode || typeof imageNode.getAttribute !== 'function') return ''
+
+  const widthAttribute = parseImageWidthPixels(imageNode.getAttribute('width'))
+  if (widthAttribute) return widthAttribute
+
+  const styleText = String(imageNode.getAttribute('style') || '')
+  const widthMatch = styleText.match(/(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)px\s*(?:;|$)/i)
+  if (!widthMatch) return ''
+
+  return parseImageWidthPixels(widthMatch[1])
+}
 
 const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader()
@@ -300,6 +402,8 @@ function PostForm() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [pendingInlineUploads, setPendingInlineUploads] = useState([])
   const [editorHtmlSnapshot, setEditorHtmlSnapshot] = useState('<p><br></p>')
+  const [editorMarkdownSnapshot, setEditorMarkdownSnapshot] = useState('')
+  const [editorViewMode, setEditorViewMode] = useState('write')
   const [aiBusyAction, setAiBusyAction] = useState('')
   const [aiTagSuggestions, setAiTagSuggestions] = useState([])
 
@@ -402,12 +506,20 @@ function PostForm() {
     })
   }
 
+  const syncEditorSnapshots = () => {
+    const editor = editorRef.current
+    if (!editor) return
+    const nextHtml = editor.innerHTML || ''
+    setEditorHtmlSnapshot(nextHtml)
+    setEditorMarkdownSnapshot(extractEditorMarkdownText(nextHtml))
+  }
+
   const setEditorHtml = (nextHtml) => {
     const editor = editorRef.current
     if (!editor) return
     editor.innerHTML = nextHtml
     normalizeEditorImageNodes()
-    setEditorHtmlSnapshot(editor.innerHTML)
+    syncEditorSnapshots()
   }
 
   useEffect(() => {
@@ -562,7 +674,7 @@ function PostForm() {
     }
 
     normalizeEditorImageNodes()
-    setEditorHtmlSnapshot(editor.innerHTML)
+    syncEditorSnapshots()
   }
 
   const hasFileDragPayload = (event, { requireFiles = false } = {}) => {
@@ -745,7 +857,7 @@ function PostForm() {
     const editor = editorRef.current
     if (editor) {
       normalizeEditorImageNodes()
-      setEditorHtmlSnapshot(editor.innerHTML)
+      syncEditorSnapshots()
     }
   }
 
@@ -821,7 +933,7 @@ function PostForm() {
       selection.addRange(range)
     }
 
-    setEditorHtmlSnapshot(editor.innerHTML)
+    syncEditorSnapshots()
   }
 
   const clearResizeHoverState = () => {
@@ -972,7 +1084,7 @@ function PostForm() {
       selection.addRange(range)
     }
 
-    setEditorHtmlSnapshot(editor.innerHTML)
+    syncEditorSnapshots()
   }
 
   const handleEditorPointerDown = (event) => {
@@ -1078,7 +1190,7 @@ function PostForm() {
     clearResizeHoverState()
 
     if (editorRef.current) {
-      setEditorHtmlSnapshot(editorRef.current.innerHTML)
+      syncEditorSnapshots()
     }
   }
 
@@ -1184,6 +1296,26 @@ function PostForm() {
   const removeFailedUploadNodes = (htmlText, failedUploads) => {
     if (failedUploads.length === 0) return htmlText
 
+    if (!isLikelyHtml(htmlText)) {
+      let nextText = String(htmlText || '')
+
+      failedUploads.forEach((upload) => {
+        const escapedPlaceholder = escapeRegExp(upload.placeholder)
+        const markdownImagePattern = new RegExp(`!\\[[^\\]]*\\]\\(${escapedPlaceholder}(?:\\s+\"[^\"]*\")?\\)`, 'g')
+        const markdownLinkPattern = new RegExp(`\\[[^\\]]*\\]\\(${escapedPlaceholder}(?:\\s+\"[^\"]*\")?\\)`, 'g')
+        const fallbackText = `[업로드 실패: ${upload.originalFilename}]`
+
+        nextText = nextText.replace(markdownImagePattern, fallbackText)
+        nextText = nextText.replace(markdownLinkPattern, fallbackText)
+        nextText = nextText.replace(new RegExp(escapedPlaceholder, 'g'), '')
+      })
+
+      return nextText
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+    }
+
     const parser = new DOMParser()
     const parsed = parser.parseFromString(htmlText, 'text/html')
     const body = parsed.body
@@ -1209,6 +1341,21 @@ function PostForm() {
     return body.innerHTML
   }
 
+  const normalizeStoredEditorContent = (contentText) => {
+    const source = String(contentText || '')
+    if (!source.trim()) return ''
+
+    if (isLikelyHtml(source)) {
+      return sanitizeRichHtml(source)
+    }
+
+    return source
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  }
+
   const uploadInlineFiles = async (targetPostId, contentWithPlaceholders) => {
     const targets = pendingInlineUploadsRef.current.filter((upload) => (
       contentWithPlaceholders.includes(upload.placeholder)
@@ -1216,7 +1363,7 @@ function PostForm() {
 
     if (targets.length === 0) {
       return {
-        resolvedContent: sanitizeRichHtml(contentWithPlaceholders),
+        resolvedContent: normalizeStoredEditorContent(contentWithPlaceholders),
         uploadedCount: 0,
         failedUploads: [],
       }
@@ -1246,7 +1393,7 @@ function PostForm() {
 
     let resolvedContent = replaceUploadPlaceholders(contentWithPlaceholders, replacements)
     resolvedContent = removeFailedUploadNodes(resolvedContent, failedUploads)
-    resolvedContent = sanitizeRichHtml(resolvedContent)
+    resolvedContent = normalizeStoredEditorContent(resolvedContent)
 
     return {
       resolvedContent,
@@ -1342,7 +1489,11 @@ function PostForm() {
     e.preventDefault()
 
     const trimmedTitle = title.trim()
-    const serializedContent = serializeContentWithPlaceholders()
+    const serializedContent = String(
+      extractEditorMarkdownText(serializeContentWithPlaceholders())
+      || editorMarkdownSnapshot
+      || '',
+    ).replace(/\r\n/g, '\n')
     const isRecruitPost = postType === POST_TYPE_RECRUIT
     const effectiveCategoryId = isRecruitPost ? recruitCategoryId : categoryId
 
@@ -1761,29 +1912,69 @@ function PostForm() {
           </div>
 
           <div>
-            <label htmlFor="rich-editor" className="block text-sm font-semibold text-ink-700 mb-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label htmlFor="rich-editor" className="block text-sm font-semibold text-ink-700">
+                ?댁슜
+              </label>
+              <div className="inline-flex rounded-lg border border-ink-200 bg-paper-100 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setEditorViewMode('write')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                    editorViewMode === 'write'
+                      ? 'bg-white text-ink-900 shadow-sm'
+                      : 'text-ink-500 hover:text-ink-700'
+                  }`}
+                >
+                  Write
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorViewMode('preview')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                    editorViewMode === 'preview'
+                      ? 'bg-white text-ink-900 shadow-sm'
+                      : 'text-ink-500 hover:text-ink-700'
+                  }`}
+                >
+                  Preview
+                </button>
+              </div>
+            </div>
+            <label htmlFor="rich-editor" className="sr-only">
               내용
             </label>
 
-            <div
-              id="rich-editor"
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              className={`rich-editor ${isDragOver ? 'is-drag-over' : ''}`}
-              onMouseDown={handleEditorMouseDown}
-              onPointerDown={handleEditorPointerDown}
-              onClick={handleEditorClick}
-              onMouseMove={handleEditorMouseMove}
-              onMouseLeave={handleEditorMouseLeave}
-              onKeyDown={handleEditorKeyDown}
-              onInput={handleEditorInput}
-              onPaste={handleEditorPaste}
-              onDragEnter={handleEditorDragEnter}
-              onDragOver={handleEditorDragOver}
-              onDragLeave={handleEditorDragLeave}
-              onDrop={handleEditorDrop}
-            />
+            <div className={editorViewMode === 'write' ? 'block' : 'hidden'}>
+              <div
+                id="rich-editor"
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                className={`rich-editor ${isDragOver ? 'is-drag-over' : ''}`}
+                onMouseDown={handleEditorMouseDown}
+                onPointerDown={handleEditorPointerDown}
+                onClick={handleEditorClick}
+                onMouseMove={handleEditorMouseMove}
+                onMouseLeave={handleEditorMouseLeave}
+                onKeyDown={handleEditorKeyDown}
+                onInput={handleEditorInput}
+                onPaste={handleEditorPaste}
+                onDragEnter={handleEditorDragEnter}
+                onDragOver={handleEditorDragOver}
+                onDragLeave={handleEditorDragLeave}
+                onDrop={handleEditorDrop}
+              />
+            </div>
+
+            {editorViewMode === 'preview' && (
+              <div className="rich-editor overflow-x-auto">
+                <MarkdownContent
+                  className="max-w-none text-ink-800 leading-relaxed"
+                  source={editorMarkdownSnapshot}
+                />
+              </div>
+            )}
 
             {activeInlineUploadCount > 0 && (
               <p className="mt-1 text-xs text-ink-500">

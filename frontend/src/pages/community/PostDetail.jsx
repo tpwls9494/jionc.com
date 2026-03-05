@@ -2,8 +2,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 import {
   API_BASE_URL,
@@ -19,61 +17,114 @@ import LoginModal from '../../components/LoginModal';
 import { getAvatarInitial, resolveProfileImageUrl } from '../../utils/userProfile';
 import { createMetaDescription, useSeo } from '../../utils/seo';
 import { trackAnalyticsEvent } from '../../utils/analytics';
+import MarkdownContent from '../../components/community/MarkdownContent';
 import {
   extractPlainTextFromRichContent,
   isLikelyHtml,
-  sanitizeRichHtml,
 } from '../../utils/richContent';
 
-const markdownComponents = {
-  h1: ({ node, ...props }) => (
-    <h1 className="mb-4 text-2xl font-bold text-ink-950" {...props} />
-  ),
-  h2: ({ node, ...props }) => (
-    <h2 className="mb-3 mt-6 text-xl font-semibold text-ink-900" {...props} />
-  ),
-  h3: ({ node, ...props }) => (
-    <h3 className="mb-3 mt-5 text-lg font-semibold text-ink-900" {...props} />
-  ),
-  p: ({ node, ...props }) => (
-    <p className="mb-4 whitespace-pre-wrap text-ink-800 leading-relaxed last:mb-0" {...props} />
-  ),
-  ul: ({ node, ...props }) => (
-    <ul className="mb-4 list-disc pl-6 text-ink-800 leading-relaxed" {...props} />
-  ),
-  ol: ({ node, ...props }) => (
-    <ol className="mb-4 list-decimal pl-6 text-ink-800 leading-relaxed" {...props} />
-  ),
-  li: ({ node, ...props }) => (
-    <li className="mb-1" {...props} />
-  ),
-  a: ({ node, ...props }) => (
-    <a
-      className="font-medium text-ink-800 underline underline-offset-2 hover:text-ink-950"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...props}
-    />
-  ),
-  img: ({ node, alt, ...props }) => (
-    <img
-      alt={alt || '첨부 이미지'}
-      loading="lazy"
-      className="my-4 w-full rounded-xl border border-ink-200 bg-paper-50 object-contain"
-      {...props}
-    />
-  ),
-  blockquote: ({ node, ...props }) => (
-    <blockquote className="my-4 border-l-4 border-ink-200 pl-4 text-ink-600" {...props} />
-  ),
-  code: ({ node, inline, ...props }) => (
-    inline
-      ? <code className="rounded bg-paper-200 px-1.5 py-0.5 text-sm text-ink-900" {...props} />
-      : <code className="text-sm text-ink-900" {...props} />
-  ),
-  pre: ({ node, ...props }) => (
-    <pre className="my-4 overflow-x-auto rounded-xl border border-ink-200 bg-paper-50 p-4" {...props} />
-  ),
+const MARKDOWN_BLOCK_TAGS = new Set([
+  'p', 'div', 'li', 'blockquote', 'pre',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'ul', 'ol', 'figure', 'figcaption',
+]);
+
+const parseImageWidthPixels = (rawWidth = '') => {
+  const normalized = String(rawWidth || '').trim();
+  if (!normalized) return '';
+
+  const parsed = Number.parseFloat(normalized);
+  if (!Number.isFinite(parsed)) return '';
+
+  const rounded = Math.round(parsed);
+  if (rounded < 40 || rounded > 4000) return '';
+
+  return String(rounded);
+};
+
+const getImageWidthHintFromNode = (imageNode) => {
+  if (!imageNode || typeof imageNode.getAttribute !== 'function') return '';
+
+  const widthAttribute = parseImageWidthPixels(imageNode.getAttribute('width'));
+  if (widthAttribute) return widthAttribute;
+
+  const styleText = String(imageNode.getAttribute('style') || '');
+  const widthMatch = styleText.match(/(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)px\s*(?:;|$)/i);
+  if (!widthMatch) return '';
+
+  return parseImageWidthPixels(widthMatch[1]);
+};
+
+const convertHtmlContentToMarkdown = (html = '') => {
+  const source = String(html || '');
+  if (!source.trim()) return '';
+
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(source, 'text/html');
+  const chunks = [];
+
+  const ensureLineBreak = () => {
+    const lastChunk = chunks[chunks.length - 1] || '';
+    if (!lastChunk.endsWith('\n')) {
+      chunks.push('\n');
+    }
+  };
+
+  const walkNode = (node) => {
+    if (!node) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      chunks.push(node.textContent || '');
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tagName = (node.tagName || '').toLowerCase();
+    if (tagName === 'br') {
+      chunks.push('\n');
+      return;
+    }
+
+    if (tagName === 'img') {
+      const src = String(node.getAttribute('src') || '').trim();
+      if (!src) return;
+      const alt = String(node.getAttribute('alt') || '');
+      const escapedAlt = alt.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      const widthHint = getImageWidthHintFromNode(node);
+      const widthTitle = widthHint ? ` "w=${widthHint}"` : '';
+      chunks.push(`![${escapedAlt}](${src}${widthTitle})`);
+      return;
+    }
+
+    if (tagName === 'a') {
+      const href = String(node.getAttribute('href') || '').trim();
+      if (href) {
+        const labelSource = String(node.textContent || href).replace(/\s+/g, ' ').trim() || href;
+        const escapedLabel = labelSource.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+        chunks.push(`[${escapedLabel}](${href})`);
+        return;
+      }
+    }
+
+    const isBlock = MARKDOWN_BLOCK_TAGS.has(tagName);
+    if (isBlock && chunks.length > 0) {
+      ensureLineBreak();
+    }
+
+    Array.from(node.childNodes || []).forEach(walkNode);
+
+    if (isBlock) {
+      ensureLineBreak();
+    }
+  };
+
+  Array.from(parsed.body.childNodes || []).forEach(walkNode);
+
+  return chunks
+    .join('')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 };
 
 const RECRUIT_TYPE_LABELS = {
@@ -318,9 +369,10 @@ function PostDetail() {
   const showFollowButton = Boolean(post?.user_id) && (!token || (user && user.id !== post.user_id));
   const comments = commentsData?.data || [];
   const postContent = post?.content || '';
-  const isHtmlPostContent = isLikelyHtml(postContent);
-  const sanitizedHtmlContent = isHtmlPostContent ? sanitizeRichHtml(postContent) : '';
-  const postDescription = createMetaDescription(extractPlainTextFromRichContent(postContent));
+  const postMarkdownContent = isLikelyHtml(postContent)
+    ? convertHtmlContentToMarkdown(postContent)
+    : postContent;
+  const postDescription = createMetaDescription(extractPlainTextFromRichContent(postMarkdownContent));
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const publicPostUrl = post ? `${currentOrigin}/posts/${post.id}` : `${currentOrigin}/posts/${postId}`;
   const sharePreviewUrl = post ? `${currentOrigin}/share/posts/${post.id}` : `${currentOrigin}/share/posts/${postId}`;
@@ -669,18 +721,10 @@ function PostDetail() {
         </div>
 
         <div className="px-6 sm:px-8 py-8">
-          {isHtmlPostContent ? (
-            <div
-              className="rich-content max-w-none text-ink-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizedHtmlContent }}
-            />
-          ) : (
-            <div className="max-w-none text-ink-800 leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {postContent}
-              </ReactMarkdown>
-            </div>
-          )}
+          <MarkdownContent
+            className="max-w-none text-ink-800 leading-relaxed"
+            source={postMarkdownContent}
+          />
         </div>
 
         {isRecruitPost && (isAuthor || isAdmin) && (
