@@ -456,9 +456,17 @@ class AiService:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": temperature,
-            "max_tokens": max(1, int(max_tokens)),
         }
+
+        # GPT-5 family rejects some legacy Chat Completions parameters.
+        token_limit = max(1, int(max_tokens))
+        if self._use_max_completion_tokens(model):
+            payload["max_completion_tokens"] = token_limit
+        else:
+            payload["max_tokens"] = token_limit
+
+        if self._supports_temperature(model):
+            payload["temperature"] = temperature
 
         start = time.perf_counter()
         try:
@@ -466,6 +474,30 @@ class AiService:
                 response = client.post(url, headers=headers, json=payload)
                 response.raise_for_status()
                 body = response.json()
+        except httpx.HTTPStatusError as exc:
+            latency_ms = (time.perf_counter() - start) * 1000
+            response_body = ""
+            try:
+                response_body = (exc.response.text or "").strip()
+            except Exception:
+                response_body = ""
+            if len(response_body) > 1200:
+                response_body = response_body[:1200] + "..."
+            detail = str(exc)
+            if response_body:
+                detail = f"{detail} | body={response_body}"
+            logger.warning("AI call failed: %s", detail)
+            return ModelCallResult(
+                text="",
+                model=model,
+                status="failed",
+                error_message=detail,
+                latency_ms=round(latency_ms, 2),
+                prompt_tokens=0,
+                completion_tokens=0,
+                total_tokens=0,
+                cost_usd=0.0,
+            )
         except httpx.TimeoutException:
             latency_ms = (time.perf_counter() - start) * 1000
             return ModelCallResult(
@@ -518,6 +550,20 @@ class AiService:
             total_tokens=total_tokens,
             cost_usd=cost_usd,
         )
+
+    @staticmethod
+    def _is_gpt5_family(model: str) -> bool:
+        normalized = str(model or "").strip().lower()
+        return normalized.startswith("gpt-5")
+
+    def _use_max_completion_tokens(self, model: str) -> bool:
+        normalized = str(model or "").strip().lower()
+        return self._is_gpt5_family(normalized) or normalized.startswith("o")
+
+    def _supports_temperature(self, model: str) -> bool:
+        # GPT-5 family often rejects temperature unless very specific settings are used.
+        # To keep requests stable, omit temperature for GPT-5 models.
+        return not self._is_gpt5_family(model)
 
     def _coerce_allowed_intent(
         self,
