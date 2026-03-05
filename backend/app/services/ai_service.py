@@ -342,16 +342,21 @@ class AiService:
                 category_slug=category_slug,
             ),
             max_tokens=settings.AI_EDITOR_MAX_TOKENS,
+            temperature=0.0,
         )
         if model_result.status != "success" or not model_result.text.strip():
             return fallback, model_result
 
         parsed = self._try_parse_json(model_result.text)
         if not isinstance(parsed, dict):
+            model_result.status = "invalid_json"
+            model_result.error_message = "editor model output is not valid JSON"
             return fallback, model_result
 
         normalized = self._normalize_editor_json(action=action, payload=parsed)
         if not normalized:
+            model_result.status = "invalid_schema"
+            model_result.error_message = "editor model output does not match expected schema"
             return fallback, model_result
         return normalized, model_result
 
@@ -664,11 +669,11 @@ class AiService:
         category_slug: str | None,
     ) -> dict[str, Any]:
         if action == "proofread":
-            revised = self._normalize_spaces(text)
+            revised = text or ""
             return {
-                "revised_text": revised or text,
-                "changes": ["중복 공백과 줄바꿈을 정리했습니다."],
-                "note": "자동 교정은 기본 정리 위주로 적용되었습니다.",
+                "revised_text": revised,
+                "changes": ["모델 응답을 받지 못해 원문을 유지했습니다."],
+                "note": "잠시 후 다시 시도해 주세요.",
             }
         if action == "title":
             seeds = self._extract_keywords(text=(title or "") + " " + text, limit=3)
@@ -771,7 +776,7 @@ class AiService:
         counts: dict[str, int] = {}
         for token in tokens:
             normalized = self._normalize_tag(token)
-            if not normalized or normalized in stopwords:
+            if not normalized or normalized.isdigit() or normalized in stopwords:
                 continue
             counts[normalized] = counts.get(normalized, 0) + 1
         sorted_items = sorted(counts.items(), key=lambda item: (-item[1], item[0]))

@@ -3,6 +3,7 @@ import { aiAPI } from '../../services/api';
 
 const OUT_OF_SCOPE_REFUSAL = '이 요청은 현재 도우미 지원 범위를 벗어나서 답변할 수 없습니다.';
 const OUT_OF_SCOPE_PIVOT = '대신 개발 Q&A, 사이트 이용법, 글쓰기 보조 중에서 어떤 도움을 원하시나요?';
+const INITIAL_ASSISTANT_MESSAGE = '안녕하세요. 개발 질문, 사이트 이용 문의를 도와드릴 수 있어요. 필요한 내용을 입력해 주세요.';
 
 const createMessage = (role, content, extra = {}) => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -18,7 +19,7 @@ function SidebarChatWidget() {
   const [messages, setMessages] = useState(() => ([
     createMessage(
       'assistant',
-      '안녕하세요. 개발 질문, 사이트 이용 문의를 도와드릴 수 있어요. 필요한 내용을 입력해 주세요.',
+      INITIAL_ASSISTANT_MESSAGE,
     ),
   ]));
   const listRef = useRef(null);
@@ -40,6 +41,14 @@ function SidebarChatWidget() {
     if (!node) return;
     node.scrollTop = node.scrollHeight;
   }, [messages, isOpen]);
+
+  const handleResetConversation = () => {
+    if (isSending) return;
+    setMessages([
+      createMessage('assistant', INITIAL_ASSISTANT_MESSAGE),
+    ]);
+    setInput('');
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -106,16 +115,26 @@ function SidebarChatWidget() {
               <p className="text-sm font-semibold text-ink-900">AI 도우미</p>
               <p className="text-[11px] text-ink-500">수동 전송 시에만 요청됩니다.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="text-ink-500 hover:text-ink-800"
-              aria-label="채팅 닫기"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleResetConversation}
+                disabled={isSending}
+                className="h-8 px-2.5 rounded-md border border-ink-200 bg-white text-[11px] font-medium text-ink-700 hover:bg-paper-100 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                새 대화
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-ink-500 hover:text-ink-800"
+                aria-label="채팅 닫기"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </header>
 
           <div ref={listRef} className="h-[340px] overflow-y-auto px-3 py-3 space-y-2.5 bg-white">
