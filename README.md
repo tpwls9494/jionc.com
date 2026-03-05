@@ -130,3 +130,59 @@ notice_board/
 ## License
 
 MIT
+
+## AI Assistant (NEW)
+
+### Environment variables
+
+Add these to backend environment (`backend/.env.example` includes defaults):
+
+```bash
+AI_API_KEY=
+AI_BASE_URL=https://api.openai.com/v1
+AI_ROUTE_MODEL=gpt-4.1-mini
+AI_CHAT_MODEL=gpt-4.1-mini
+AI_EDITOR_MODEL=gpt-4.1-mini
+AI_TIMEOUT_SECONDS=12
+AI_RATE_LIMIT_WINDOW_SECONDS=60
+AI_RATE_LIMIT_MAX_REQUESTS=20
+AI_CACHE_TTL_SECONDS=180
+```
+
+### API endpoints
+
+- `POST /api/ai/route`
+- `POST /api/ai/chat` (`source=sidebar_chat`)
+- `POST /api/ai/editor/proofread`
+- `POST /api/ai/editor/title`
+- `POST /api/ai/editor/template`
+- `POST /api/ai/editor/tags`
+- `POST /api/ai/editor/mask`
+
+### Local run
+
+```bash
+# backend
+cd backend
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+
+# frontend
+cd frontend
+npm install
+npm run dev
+```
+
+### Test commands
+
+```bash
+# backend AI tests
+python -m pytest backend/tests/test_ai_endpoints.py -q -p no:cacheprovider
+
+# backend syntax checks
+python -m py_compile backend/app/api/ai.py backend/app/services/ai_service.py backend/app/schemas/ai.py
+
+# frontend checks
+npm --prefix frontend run build
+```

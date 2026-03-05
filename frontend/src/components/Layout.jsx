@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import useAuthStore from '../stores/authStore';
 import LoginModal from './LoginModal';
+import SidebarChatWidget from './ai/SidebarChatWidget';
 import { notificationsAPI } from '../services/api';
 import { getAvatarInitial, resolveProfileImageUrl } from '../utils/userProfile';
 
@@ -487,6 +488,7 @@ function Layout() {
         onClose={() => setShowLoginModal(false)}
         onSuccess={() => setShowLoginModal(false)}
       />
+      <SidebarChatWidget />
     </div>
   );
 }

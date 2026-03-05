@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+from app.api import ai as ai_routes
 from app.api import seo as seo_routes
 from app.api.v1 import (
     auth,
@@ -145,6 +146,7 @@ app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
 app.include_router(community.router, prefix="/api/v1/community", tags=["community"])
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
+app.include_router(ai_routes.router, prefix="/api/ai", tags=["ai"])
 app.include_router(seo_routes.public_router)
 app.include_router(seo_routes.api_router, prefix="/api/v1/seo", tags=["seo"])
 app.include_router(

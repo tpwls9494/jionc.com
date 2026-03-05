@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -59,10 +60,27 @@ class Settings(BaseSettings):
     SMTP_USE_SSL: bool = False
 
     # MCP Playground settings
-    MCP_ALLOWED_SERVERS: str = "fetch-server"  # 실제 연결 허용 서버 slug (쉼표 구분)
-    MCP_CONNECT_TIMEOUT: int = 30  # 연결 타임아웃 (초)
-    MCP_INVOKE_TIMEOUT: int = 60  # tool 실행 타임아웃 (초)
-    MCP_SESSION_TTL: int = 300  # 유휴 세션 TTL (초)
+    MCP_ALLOWED_SERVERS: str = "fetch-server"
+    MCP_CONNECT_TIMEOUT: int = 30
+    MCP_INVOKE_TIMEOUT: int = 60
+    MCP_SESSION_TTL: int = 300
+
+    # AI assistant settings
+    AI_API_KEY: Optional[str] = None
+    AI_BASE_URL: str = "https://api.openai.com/v1"
+    AI_ROUTE_MODEL: str = "gpt-4.1-mini"
+    AI_CHAT_MODEL: str = "gpt-4.1-mini"
+    AI_EDITOR_MODEL: str = "gpt-4.1-mini"
+    AI_TIMEOUT_SECONDS: int = 12
+    AI_ROUTE_MAX_TOKENS: int = 120
+    AI_CHAT_MAX_TOKENS: int = 600
+    AI_EDITOR_MAX_TOKENS: int = 900
+    AI_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    AI_RATE_LIMIT_MAX_REQUESTS: int = 20
+    AI_CACHE_TTL_SECONDS: int = 180
+    AI_CACHE_MAX_ITEMS: int = 500
+    AI_INPUT_COST_PER_1K_USD: float = 0.0
+    AI_OUTPUT_COST_PER_1K_USD: float = 0.0
 
 
 settings = Settings()

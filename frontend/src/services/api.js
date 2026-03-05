@@ -9,6 +9,13 @@ const api = axios.create({
   },
 });
 
+const aiApi = axios.create({
+  baseURL: `${API_BASE_URL}/api/ai`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const resolveApiAssetUrl = (assetPath) => {
   if (!assetPath) return null;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
@@ -32,6 +39,27 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+    }
+    return Promise.reject(error);
+  }
+);
+
+aiApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+aiApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -181,6 +209,13 @@ export const notificationsAPI = {
 export const analyticsAPI = {
   trackEvent: (data) => api.post('/analytics/events', data),
   getSummary: (days = 7, limit = 20) => api.get(`/analytics/summary?days=${days}&limit=${limit}`),
+};
+
+// AI API
+export const aiAPI = {
+  route: (payload) => aiApi.post('/route', payload),
+  chat: (payload) => aiApi.post('/chat', payload),
+  editorAction: (action, payload) => aiApi.post(`/editor/${action}`, payload),
 };
 
 // Files API

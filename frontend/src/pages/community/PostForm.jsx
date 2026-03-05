@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { postsAPI, filesAPI } from '../../services/api'
+import { aiAPI, postsAPI, filesAPI } from '../../services/api'
 import useCategoriesStore from '../../stores/categoriesStore'
 import useAuthStore from '../../stores/authStore'
 import {
@@ -13,7 +13,7 @@ import {
 
 const NOTICE_CATEGORY_SLUG = 'notice'
 const RECRUIT_CATEGORY_SLUG = 'team-recruit'
-const RECRUIT_CATEGORY_NAME = '팀 모집'
+const RECRUIT_CATEGORY_NAME = '? 紐⑥쭛'
 const IMAGE_MIME_PREFIX = 'image/'
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const IMAGE_RESIZE_MIN_WIDTH = 140
@@ -23,12 +23,19 @@ const POST_TYPE_NORMAL = 'NORMAL'
 const POST_TYPE_RECRUIT = 'RECRUIT'
 const RECRUIT_STATUS_OPEN = 'OPEN'
 const RECRUIT_STATUS_CLOSED = 'CLOSED'
+const EDITOR_AI_ACTIONS = [
+  { key: 'proofread', label: 'Proofread' },
+  { key: 'title', label: 'Title' },
+  { key: 'template', label: 'Template' },
+  { key: 'tags', label: 'Tags' },
+  { key: 'mask', label: 'Mask' },
+]
 const RECRUIT_TYPE_OPTIONS = [
-  { value: 'PROJECT', label: '프로젝트' },
-  { value: 'STUDY', label: '스터디' },
-  { value: 'HACKATHON', label: '해커톤/공모전' },
-  { value: 'CLUB', label: '동아리/커뮤니티' },
-  { value: 'ETC', label: '기타' },
+  { value: 'PROJECT', label: 'Project' },
+  { value: 'STUDY', label: 'Study' },
+  { value: 'HACKATHON', label: 'Hackathon/Contest' },
+  { value: 'CLUB', label: 'Club/Community' },
+  { value: 'ETC', label: 'Other' },
 ]
 
 const ALLOWED_UPLOAD_TYPES = [
@@ -123,6 +130,17 @@ const escapeHtml = (value = '') => (
     .replace(/'/g, '&#39;')
 )
 
+const plainTextToEditorHtml = (value = '') => {
+  const normalized = String(value || '').replace(/\r\n/g, '\n').trim()
+  if (!normalized) {
+    return '<p><br></p>'
+  }
+  return normalized
+    .split('\n')
+    .map((line) => `<p>${escapeHtml(line) || '<br>'}</p>`)
+    .join('')
+}
+
 const createUploadToken = () => (
   `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 )
@@ -213,6 +231,8 @@ function PostForm() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [pendingInlineUploads, setPendingInlineUploads] = useState([])
   const [editorHtmlSnapshot, setEditorHtmlSnapshot] = useState('<p><br></p>')
+  const [aiBusyAction, setAiBusyAction] = useState('')
+  const [aiTagSuggestions, setAiTagSuggestions] = useState([])
 
   const editorRef = useRef(null)
   const pendingInlineUploadsRef = useRef([])
@@ -345,6 +365,7 @@ function PostForm() {
       )
       setRecruitDeadlineAt(toInputDateTimeLocal(recruitMeta?.deadline_at))
       setEditorHtml(normalizeStoredContentForEditor(postData.data.content || ''))
+      setAiTagSuggestions([])
       clearPendingInlineUploads()
       return
     }
@@ -359,6 +380,7 @@ function PostForm() {
       setRecruitScheduleText('')
       setRecruitHeadcountMax('')
       setRecruitDeadlineAt('')
+      setAiTagSuggestions([])
       setEditorHtml('<p><br></p>')
     }
   }, [postData, isEdit])
@@ -531,12 +553,12 @@ function PostForm() {
 
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
-        rejectedFiles.push(`${file.name} (10MB 초과)`)
+        rejectedFiles.push(`${file.name} (10MB 珥덇낵)`)
         continue
       }
 
       if (!isAllowedUploadFile(file)) {
-        rejectedFiles.push(`${file.name} (지원되지 않는 형식)`)
+        rejectedFiles.push(`${file.name} (吏?먮릺吏 ?딅뒗 ?뺤떇)`)
         continue
       }
 
@@ -544,7 +566,7 @@ function PostForm() {
     }
 
     if (rejectedFiles.length > 0) {
-      toast.warning(`일부 파일은 삽입되지 않았습니다: ${rejectedFiles.join(', ')}`)
+      toast.warning(`?쇰? ?뚯씪? ?쎌엯?섏? ?딆븯?듬땲?? ${rejectedFiles.join(', ')}`)
     }
 
     if (validFiles.length === 0) return
@@ -576,7 +598,7 @@ function PostForm() {
 
       if (isImage) {
         if (!previewSrc) {
-          insertHtmlAtCursor(`<p>[이미지 미리보기를 불러오지 못했습니다: ${escapedName}]</p>`)
+          insertHtmlAtCursor(`<p>[?대?吏 誘몃━蹂닿린瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲?? ${escapedName}]</p>`)
           continue
         }
 
@@ -1092,7 +1114,7 @@ function PostForm() {
 
       Array.from(body.querySelectorAll('a')).forEach((linkElement) => {
         if ((linkElement.getAttribute('href') || '') !== upload.placeholder) return
-        const fallbackText = parsed.createTextNode(`[업로드 실패: ${upload.originalFilename}]`)
+        const fallbackText = parsed.createTextNode(`[?낅줈???ㅽ뙣: ${upload.originalFilename}]`)
         linkElement.replaceWith(fallbackText)
       })
     })
@@ -1146,6 +1168,83 @@ function PostForm() {
     }
   }
 
+  const handleEditorAiAction = async (action) => {
+    if (aiBusyAction) return
+
+    const serializedContent = serializeContentWithPlaceholders()
+    const plainText = extractPlainTextFromRichContent(serializedContent).trim()
+    const trimmedTitle = title.trim()
+
+    if (!plainText && !trimmedTitle) {
+      toast.error('AI 蹂댁“瑜??꾪빐 ?쒕ぉ ?먮뒗 蹂몃Ц??癒쇱? ?낅젰??二쇱꽭??')
+      return
+    }
+
+    const currentCategoryId = postType === POST_TYPE_RECRUIT ? recruitCategoryId : categoryId
+    const currentCategory = categories.find((category) => String(category.id) === String(currentCategoryId))
+
+    setAiBusyAction(action)
+    try {
+      const response = await aiAPI.editorAction(action, {
+        source: 'editor_action',
+        action,
+        text: plainText,
+        title: trimmedTitle || null,
+        category_slug: currentCategory?.slug || null,
+      })
+      const data = response?.data || {}
+
+      if (action === 'proofread') {
+        if (data.revised_text) {
+          setEditorHtml(plainTextToEditorHtml(data.revised_text))
+          toast.success('蹂몃Ц 援먯젙 寃곌낵瑜??곸슜?덉뒿?덈떎.')
+        }
+        return
+      }
+
+      if (action === 'title') {
+        const nextTitle = Array.isArray(data.titles) ? data.titles.find((item) => String(item || '').trim()) : ''
+        if (nextTitle) {
+          setTitle(String(nextTitle).trim())
+          toast.success('?쒕ぉ 異붿쿇 1?덉쓣 ?곸슜?덉뒿?덈떎.')
+        } else {
+          toast.warning('異붿쿇 ?쒕ぉ???앹꽦?섏? 紐삵뻽?듬땲??')
+        }
+        return
+      }
+
+      if (action === 'template') {
+        if (data.template) {
+          setEditorHtml(plainTextToEditorHtml(data.template))
+          toast.success('?쒗뵆由우쓣 蹂몃Ц???곸슜?덉뒿?덈떎.')
+        }
+        return
+      }
+
+      if (action === 'tags') {
+        const tags = Array.isArray(data.tags) ? data.tags.filter((item) => String(item || '').trim()) : []
+        setAiTagSuggestions(tags.slice(0, 8))
+        if (tags.length > 0) {
+          toast.success('?쒓렇 異붿쿇???앹꽦?덉뒿?덈떎.')
+        } else {
+          toast.warning('異붿쿇 ?쒓렇瑜?李얠? 紐삵뻽?듬땲??')
+        }
+        return
+      }
+
+      if (action === 'mask') {
+        if (data.masked_text) {
+          setEditorHtml(plainTextToEditorHtml(data.masked_text))
+          toast.success('誘쇨컧?뺣낫 留덉뒪??寃곌낵瑜??곸슜?덉뒿?덈떎.')
+        }
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || 'AI ?붿껌???ㅽ뙣?덉뒿?덈떎.')
+    } finally {
+      setAiBusyAction('')
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -1155,38 +1254,38 @@ function PostForm() {
     const effectiveCategoryId = isRecruitPost ? recruitCategoryId : categoryId
 
     if (!trimmedTitle || !hasMeaningfulContent(serializedContent)) {
-      toast.error('제목과 내용을 모두 입력해주세요.')
+      toast.error('?쒕ぉ怨??댁슜??紐⑤몢 ?낅젰?댁＜?몄슂.')
       return
     }
 
     if (!effectiveCategoryId) {
       if (isRecruitPost) {
-        toast.error("모집 전용 카테고리('팀 모집')를 찾을 수 없습니다.")
+        toast.error("紐⑥쭛 ?꾩슜 移댄뀒怨좊━('? 紐⑥쭛')瑜?李얠쓣 ???놁뒿?덈떎.")
       } else {
-        toast.error('커뮤니티를 선택해주세요.')
+        toast.error('而ㅻ??덊떚瑜??좏깮?댁＜?몄슂.')
       }
       return
     }
 
     if (isRecruitPost) {
       if (!recruitType) {
-        toast.error('모집 유형을 선택해주세요.')
+        toast.error('紐⑥쭛 ?좏삎???좏깮?댁＜?몄슂.')
         return
       }
       if (!recruitScheduleText.trim()) {
-        toast.error('일정 정보를 입력해주세요.')
+        toast.error('?쇱젙 ?뺣낫瑜??낅젰?댁＜?몄슂.')
         return
       }
       if (!recruitHeadcountMax || Number(recruitHeadcountMax) < 1) {
-        toast.error('모집 인원을 확인해주세요.')
+        toast.error('紐⑥쭛 ?몄썝???뺤씤?댁＜?몄슂.')
         return
       }
       if (!recruitDeadlineAt || !toIsoDateTime(recruitDeadlineAt)) {
-        toast.error('마감일을 정확히 입력해주세요.')
+        toast.error('留덇컧?쇱쓣 ?뺥솗???낅젰?댁＜?몄슂.')
         return
       }
       if (!recruitIsOnline && !recruitLocationText.trim()) {
-        toast.error('오프라인 모집은 장소를 입력해주세요.')
+        toast.error('?ㅽ봽?쇱씤 紐⑥쭛? ?μ냼瑜??낅젰?댁＜?몄슂.')
         return
       }
     }
@@ -1225,13 +1324,13 @@ function PostForm() {
         await invalidateCommunityCaches()
 
         if (failedUploads.length > 0) {
-          toast.warning(`일부 파일 업로드에 실패했습니다: ${failedUploads.map((item) => item.originalFilename).join(', ')}`)
+          toast.warning(`?쇰? ?뚯씪 ?낅줈?쒖뿉 ?ㅽ뙣?덉뒿?덈떎: ${failedUploads.map((item) => item.originalFilename).join(', ')}`)
         }
 
         toast.success(
           uploadedCount > 0
-            ? `게시글이 수정되었습니다. (인라인 파일 ${uploadedCount}개 반영)`
-            : '게시글이 수정되었습니다.',
+            ? `寃뚯떆湲???섏젙?섏뿀?듬땲?? (?몃씪???뚯씪 ${uploadedCount}媛?諛섏쁺)`
+            : '寃뚯떆湲???섏젙?섏뿀?듬땲??',
         )
 
         clearPendingInlineUploads()
@@ -1252,13 +1351,13 @@ function PostForm() {
       await invalidateCommunityCaches()
 
       if (failedUploads.length > 0) {
-        toast.warning(`일부 파일 업로드에 실패했습니다: ${failedUploads.map((item) => item.originalFilename).join(', ')}`)
+        toast.warning(`?쇰? ?뚯씪 ?낅줈?쒖뿉 ?ㅽ뙣?덉뒿?덈떎: ${failedUploads.map((item) => item.originalFilename).join(', ')}`)
       }
 
       toast.success(
         uploadedCount > 0
-          ? `게시글이 작성되었습니다. (인라인 파일 ${uploadedCount}개 반영)`
-          : '게시글이 작성되었습니다.',
+          ? `寃뚯떆湲???묒꽦?섏뿀?듬땲?? (?몃씪???뚯씪 ${uploadedCount}媛?諛섏쁺)`
+          : '寃뚯떆湲???묒꽦?섏뿀?듬땲??',
       )
 
       clearPendingInlineUploads()
@@ -1266,7 +1365,7 @@ function PostForm() {
     } catch (error) {
       toast.error(
         error.response?.data?.detail
-          || (isEdit ? '게시글 수정에 실패했습니다.' : '게시글 작성에 실패했습니다.'),
+          || (isEdit ? '寃뚯떆湲 ?섏젙???ㅽ뙣?덉뒿?덈떎.' : '寃뚯떆湲 ?묒꽦???ㅽ뙣?덉뒿?덈떎.'),
       )
     } finally {
       setUploadProgress(false)
@@ -1288,23 +1387,23 @@ function PostForm() {
         <svg className="w-4 h-4 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true" style={{ transition: 'transform 0.2s ease-out' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
-        {isEdit ? '게시글로 돌아가기' : '목록으로'}
+        {isEdit ? 'Back to post' : 'Back to list'}
       </Link>
 
       <div className="card overflow-hidden">
         <div className="px-6 sm:px-8 py-5 border-b border-ink-100">
           <h1 className="font-display text-xl font-bold text-ink-950 tracking-tight text-balance">
-            {isEdit ? '게시글 수정' : '새 게시글 작성'}
+            {isEdit ? '寃뚯떆湲 ?섏젙' : '??寃뚯떆湲 ?묒꽦'}
           </h1>
           <p className="text-sm text-ink-400 mt-1">
-            {isEdit ? '내용을 수정하고 저장하세요' : '드래그앤드롭으로 이미지와 파일을 본문에 바로 삽입할 수 있습니다.'}
+            {isEdit ? '?댁슜???섏젙?섍퀬 ??ν븯?몄슂' : '?쒕옒洹몄븻?쒕∼?쇰줈 ?대?吏? ?뚯씪??蹂몃Ц??諛붾줈 ?쎌엯?????덉뒿?덈떎.'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
           <div>
             <label htmlFor="category" className="block text-sm font-semibold text-ink-700 mb-2">
-              커뮤니티 <span className="text-red-500">*</span>
+              而ㅻ??덊떚 <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
@@ -1315,7 +1414,7 @@ function PostForm() {
                 disabled={postType === POST_TYPE_RECRUIT}
                 required
               >
-                <option value="">커뮤니티를 선택하세요</option>
+                <option value="">Select category</option>
                 {selectableCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -1331,15 +1430,15 @@ function PostForm() {
             {postType === POST_TYPE_RECRUIT && (
               <p className={`mt-1 text-xs ${recruitCategory ? 'text-ink-500' : 'text-red-600'}`}>
                 {recruitCategory
-                  ? `모집 글은 '${recruitCategory.name}' 카테고리로 자동 고정됩니다.`
-                  : "모집 전용 카테고리('팀 모집')를 찾을 수 없습니다. 관리자에게 문의해주세요."}
+                  ? `紐⑥쭛 湲? '${recruitCategory.name}' 移댄뀒怨좊━濡??먮룞 怨좎젙?⑸땲??`
+                  : "紐⑥쭛 ?꾩슜 移댄뀒怨좊━('? 紐⑥쭛')瑜?李얠쓣 ???놁뒿?덈떎. 愿由ъ옄?먭쾶 臾몄쓽?댁＜?몄슂."}
               </p>
             )}
           </div>
 
           <div>
             <p className="block text-sm font-semibold text-ink-700 mb-2">
-              글 유형 <span className="text-red-500">*</span>
+              湲 ?좏삎 <span className="text-red-500">*</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -1351,7 +1450,7 @@ function PostForm() {
                     : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
                 }`}
               >
-                일반 글
+                ?쇰컲 湲
               </button>
               <button
                 type="button"
@@ -1362,19 +1461,19 @@ function PostForm() {
                     : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
                 }`}
               >
-                모집 글
+                紐⑥쭛 湲
               </button>
             </div>
           </div>
 
           {postType === POST_TYPE_RECRUIT && (
             <div className="rounded-xl border border-ink-200 bg-paper-50/70 p-4 space-y-4">
-              <h2 className="text-sm font-semibold text-ink-800">모집 정보</h2>
+              <h2 className="text-sm font-semibold text-ink-800">紐⑥쭛 ?뺣낫</h2>
 
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="recruit-type" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                    모집 유형 <span className="text-red-500">*</span>
+                    紐⑥쭛 ?좏삎 <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="recruit-type"
@@ -1383,7 +1482,7 @@ function PostForm() {
                     className="input-field !py-2.5"
                     required={postType === POST_TYPE_RECRUIT}
                   >
-                    <option value="">유형 선택</option>
+                    <option value="">?좏삎 ?좏깮</option>
                     {RECRUIT_TYPE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
@@ -1392,7 +1491,7 @@ function PostForm() {
 
                 <div>
                   <label htmlFor="recruit-status" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                    모집 상태
+                    紐⑥쭛 ?곹깭
                   </label>
                   {isEdit ? (
                     <select
@@ -1401,12 +1500,12 @@ function PostForm() {
                       onChange={(e) => setRecruitStatus(e.target.value)}
                       className="input-field !py-2.5"
                     >
-                      <option value={RECRUIT_STATUS_OPEN}>모집중</option>
-                      <option value={RECRUIT_STATUS_CLOSED}>마감</option>
+                      <option value={RECRUIT_STATUS_OPEN}>Open</option>
+                      <option value={RECRUIT_STATUS_CLOSED}>留덇컧</option>
                     </select>
                   ) : (
                     <div className="h-[42px] px-3 rounded-lg border border-ink-200 bg-white text-xs text-ink-600 flex items-center">
-                      <span className="font-medium text-emerald-700">모집중</span>
+                      <span className="font-medium text-emerald-700">Open</span>
                     </div>
                   )}
                 </div>
@@ -1415,7 +1514,7 @@ function PostForm() {
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <p className="block text-xs font-semibold text-ink-600 mb-1.5">
-                    진행 방식 <span className="text-red-500">*</span>
+                    吏꾪뻾 諛⑹떇 <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1427,8 +1526,7 @@ function PostForm() {
                           : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
                       }`}
                     >
-                      온라인
-                    </button>
+                      ?⑤씪??                    </button>
                     <button
                       type="button"
                       onClick={() => setRecruitIsOnline(false)}
@@ -1438,14 +1536,14 @@ function PostForm() {
                           : 'bg-white text-ink-600 border-ink-200 hover:bg-paper-100'
                       }`}
                     >
-                      오프라인
+                      ?ㅽ봽?쇱씤
                     </button>
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="recruit-headcount" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                    모집 인원 <span className="text-red-500">*</span>
+                    紐⑥쭛 ?몄썝 <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="recruit-headcount"
@@ -1454,7 +1552,7 @@ function PostForm() {
                     value={recruitHeadcountMax}
                     onChange={(e) => setRecruitHeadcountMax(e.target.value)}
                     className="input-field !py-2.5"
-                    placeholder="예: 5"
+                    placeholder="?? 5"
                     required={postType === POST_TYPE_RECRUIT}
                   />
                 </div>
@@ -1463,7 +1561,7 @@ function PostForm() {
               {!recruitIsOnline && (
                 <div>
                   <label htmlFor="recruit-location" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                    장소 <span className="text-red-500">*</span>
+                    ?μ냼 <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="recruit-location"
@@ -1471,7 +1569,7 @@ function PostForm() {
                     value={recruitLocationText}
                     onChange={(e) => setRecruitLocationText(e.target.value)}
                     className="input-field !py-2.5"
-                    placeholder="예: 강남역 인근 스터디룸"
+                    placeholder="?? 媛뺣궓???멸렐 ?ㅽ꽣?붾８"
                     required={postType === POST_TYPE_RECRUIT && !recruitIsOnline}
                   />
                 </div>
@@ -1479,7 +1577,7 @@ function PostForm() {
 
               <div>
                 <label htmlFor="recruit-schedule" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                  일정 <span className="text-red-500">*</span>
+                  ?쇱젙 <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="recruit-schedule"
@@ -1487,14 +1585,14 @@ function PostForm() {
                   value={recruitScheduleText}
                   onChange={(e) => setRecruitScheduleText(e.target.value)}
                   className="input-field !py-2.5"
-                  placeholder="예: 매주 화/목 20:00 온라인 진행"
+                  placeholder="?? 留ㅼ＜ ??紐?20:00 ?⑤씪??吏꾪뻾"
                   required={postType === POST_TYPE_RECRUIT}
                 />
               </div>
 
               <div>
                 <label htmlFor="recruit-deadline-date" className="block text-xs font-semibold text-ink-600 mb-1.5">
-                  모집 마감일 <span className="text-red-500">*</span>
+                  紐⑥쭛 留덇컧??<span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -1521,7 +1619,7 @@ function PostForm() {
 
           <div>
             <label htmlFor="title" className="block text-sm font-semibold text-ink-700 mb-2">
-              제목
+              ?쒕ぉ
             </label>
             <input
               id="title"
@@ -1529,15 +1627,47 @@ function PostForm() {
               autoComplete="off"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요&#x2026;"
+              placeholder="?쒕ぉ???낅젰?섏꽭??#x2026;"
               className="input-field h-[52px] text-lg font-medium"
               required
             />
           </div>
 
+          <div className="rounded-xl border border-ink-200 bg-paper-50/70 p-3">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <p className="text-xs font-semibold text-ink-700">AI 글쓰기 보조</p>
+              <p className="text-[11px] text-ink-500">버튼 클릭 시에만 요청됩니다.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {EDITOR_AI_ACTIONS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleEditorAiAction(item.key)}
+                  disabled={Boolean(aiBusyAction) || isLoading || uploadProgress}
+                  className={`h-9 rounded-lg border text-xs font-semibold transition-colors ${
+                    aiBusyAction === item.key
+                      ? 'border-ink-900 bg-ink-900 text-paper-50'
+                      : 'border-ink-200 bg-white text-ink-700 hover:bg-paper-100'
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {aiBusyAction === item.key ? '처리 중...' : item.label}
+                </button>
+              ))}
+            </div>
+            {aiTagSuggestions.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {aiTagSuggestions.map((tag) => (
+                  <span key={tag} className="badge-default text-[11px]">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <div>
             <label htmlFor="rich-editor" className="block text-sm font-semibold text-ink-700 mb-2">
-              내용
+              ?댁슜
             </label>
 
             <div
@@ -1562,8 +1692,7 @@ function PostForm() {
 
             {activeInlineUploadCount > 0 && (
               <p className="mt-1 text-xs text-ink-500">
-                업로드 대기 중인 인라인 파일: {activeInlineUploadCount}개
-              </p>
+                ?낅줈???湲?以묒씤 ?몃씪???뚯씪: {activeInlineUploadCount}媛?              </p>
             )}
           </div>
 
@@ -1573,7 +1702,7 @@ function PostForm() {
               onClick={() => navigate(-1)}
               className="btn-secondary"
             >
-              취소
+              痍⑥냼
             </button>
             <button
               type="submit"
@@ -1581,8 +1710,8 @@ function PostForm() {
               className="btn-accent"
             >
               {(isLoading || uploadProgress)
-                ? '저장 중\u2026'
-                : (isEdit ? '수정 완료' : '작성 완료')
+                ? '???以?u2026'
+                : (isEdit ? '?섏젙 ?꾨즺' : '?묒꽦 ?꾨즺')
               }
             </button>
           </div>
@@ -1593,3 +1722,5 @@ function PostForm() {
 }
 
 export default PostForm
+
+
