@@ -65,4 +65,5 @@ def test_fallback_title_candidates_are_not_generic():
     )
     assert len(titles) >= 1
     assert all("경험 공유" not in title for title in titles)
+    assert all("적용 이슈 정리" not in title for title in titles)
     assert any("케이뱅크" in title for title in titles)

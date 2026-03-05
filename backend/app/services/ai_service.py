@@ -367,6 +367,7 @@ class AiService:
                 max_tokens=settings.AI_EDITOR_MAX_TOKENS,
                 temperature=0.0,
                 timeout_seconds=max(1, int(settings.AI_EDITOR_TIMEOUT_SECONDS)),
+                force_json=True,
             )
             last_result = model_result
 
@@ -380,6 +381,15 @@ class AiService:
 
             parsed = self._try_parse_json(model_result.text)
             if not isinstance(parsed, dict):
+                recovered = self._coerce_non_json_editor_output(
+                    action=action,
+                    raw_text=model_result.text,
+                    source_text=text,
+                )
+                if recovered is not None:
+                    model_result.status = "recovered_non_json"
+                    model_result.error_message = "editor model output was recovered from non-JSON text"
+                    return recovered, model_result
                 model_result.status = "invalid_json"
                 model_result.error_message = "editor model output is not valid JSON"
                 continue
@@ -469,6 +479,7 @@ class AiService:
         max_tokens: int,
         temperature: float = 0.2,
         timeout_seconds: int | None = None,
+        force_json: bool = False,
     ) -> ModelCallResult:
         if not self.is_model_enabled:
             return ModelCallResult(
@@ -507,6 +518,9 @@ class AiService:
 
         if self._supports_temperature(model):
             payload["temperature"] = temperature
+
+        if force_json and self._supports_json_response_format(model):
+            payload["response_format"] = {"type": "json_object"}
 
         start = time.perf_counter()
         try:
@@ -605,6 +619,14 @@ class AiService:
         # GPT-5 family often rejects temperature unless very specific settings are used.
         # To keep requests stable, omit temperature for GPT-5 models.
         return not self._is_gpt5_family(model)
+
+    @staticmethod
+    def _supports_json_response_format(model: str) -> bool:
+        normalized = str(model or "").strip().lower()
+        if not normalized:
+            return False
+        # Keep conservative to avoid 400 on unsupported models.
+        return normalized.startswith("gpt-4")
 
     def _coerce_allowed_intent(
         self,
@@ -944,7 +966,7 @@ class AiService:
             f"{base} 핵심 포인트 요약",
         ]
         if keyword_pair:
-            candidates.append(f"{keyword_pair} 적용 이슈 정리")
+            candidates.append(f"{keyword_pair} 관련 핵심 정리")
 
         return self._rank_title_candidates(
             titles=[item for item in candidates if item and len(item) >= 6],
@@ -993,6 +1015,41 @@ class AiService:
 
         ranked = sorted(deduplicated, key=score_item, reverse=True)
         return [title for _, title in ranked]
+
+    def _coerce_non_json_editor_output(
+        self,
+        *,
+        action: str,
+        raw_text: str,
+        source_text: str,
+    ) -> dict[str, Any] | None:
+        cleaned = str(raw_text or "").strip()
+        if not cleaned:
+            return None
+
+        # Remove markdown fences if present.
+        fenced = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", cleaned)
+        fenced = re.sub(r"\s*```$", "", fenced).strip()
+        if not fenced:
+            return None
+
+        if action == "proofread":
+            return {
+                "revised_text": fenced,
+                "changes": [],
+                "note": None,
+            }
+
+        if action == "mask":
+            if any(token in fenced for token in ("[EMAIL]", "[PHONE]", "[URL]", "[NUMBER]")):
+                return {
+                    "masked_text": fenced,
+                    "redactions": [],
+                }
+            # If model returned plain text without markers, fallback to deterministic masker.
+            return self._mask_sensitive_text(text=source_text)
+
+        return None
 
     @staticmethod
     def _normalize_tag(raw: str) -> str:

@@ -341,7 +341,7 @@ def _handle_editor_action(
     )
     elapsed_ms = (time.perf_counter() - start) * 1000
 
-    if model_result.status != "success":
+    if model_result.status not in {"success", "recovered_non_json"}:
         _safe_log(
             db,
             user_id=current_user.id if current_user else None,
