@@ -1872,7 +1872,7 @@ function PostForm() {
               autoComplete="off"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요&#x2026;"
+              placeholder="제목을 입력하세요…"
               className="input-field h-[52px] text-lg font-medium"
               required
             />
@@ -1914,7 +1914,7 @@ function PostForm() {
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
               <label htmlFor="rich-editor" className="block text-sm font-semibold text-ink-700">
-                ?댁슜
+                내용
               </label>
               <div className="inline-flex rounded-lg border border-ink-200 bg-paper-100 p-0.5">
                 <button
@@ -1926,7 +1926,7 @@ function PostForm() {
                       : 'text-ink-500 hover:text-ink-700'
                   }`}
                 >
-                  Write
+                  작성
                 </button>
                 <button
                   type="button"
@@ -1937,7 +1937,7 @@ function PostForm() {
                       : 'text-ink-500 hover:text-ink-700'
                   }`}
                 >
-                  Preview
+                  미리보기
                 </button>
               </div>
             </div>
@@ -1997,7 +1997,7 @@ function PostForm() {
               className="btn-accent"
             >
               {(isLoading || uploadProgress)
-                ? '저장 중\u2026'
+                ? '저장 중…'
                 : (isEdit ? '수정 완료' : '작성 완료')
               }
             </button>

@@ -75,7 +75,7 @@ const markdownComponents = {
     const widthHint = parseImageWidthFromTitle(title)
     return (
       <img
-        alt={alt || 'Attached image'}
+        alt={alt || '첨부 이미지'}
         loading="lazy"
         title={widthHint ? undefined : title}
         style={widthHint ? { width: `${widthHint}px`, maxWidth: '100%', height: 'auto' } : undefined}
