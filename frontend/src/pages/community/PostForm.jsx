@@ -24,18 +24,18 @@ const POST_TYPE_RECRUIT = 'RECRUIT'
 const RECRUIT_STATUS_OPEN = 'OPEN'
 const RECRUIT_STATUS_CLOSED = 'CLOSED'
 const EDITOR_AI_ACTIONS = [
-  { key: 'proofread', label: 'Proofread' },
-  { key: 'title', label: 'Title' },
-  { key: 'template', label: 'Template' },
-  { key: 'tags', label: 'Tags' },
-  { key: 'mask', label: 'Mask' },
+  { key: 'proofread', label: '교정' },
+  { key: 'title', label: '제목' },
+  { key: 'template', label: '템플릿' },
+  { key: 'tags', label: '태그' },
+  { key: 'mask', label: '마스킹' },
 ]
 const RECRUIT_TYPE_OPTIONS = [
-  { value: 'PROJECT', label: 'Project' },
-  { value: 'STUDY', label: 'Study' },
-  { value: 'HACKATHON', label: 'Hackathon/Contest' },
-  { value: 'CLUB', label: 'Club/Community' },
-  { value: 'ETC', label: 'Other' },
+  { value: 'PROJECT', label: '프로젝트' },
+  { value: 'STUDY', label: '스터디' },
+  { value: 'HACKATHON', label: '해커톤/공모전' },
+  { value: 'CLUB', label: '동아리/커뮤니티' },
+  { value: 'ETC', label: '기타' },
 ]
 
 const ALLOWED_UPLOAD_TYPES = [
@@ -1387,7 +1387,7 @@ function PostForm() {
         <svg className="w-4 h-4 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true" style={{ transition: 'transform 0.2s ease-out' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
-        {isEdit ? 'Back to post' : 'Back to list'}
+        {isEdit ? '게시글로 돌아가기' : '목록으로'}
       </Link>
 
       <div className="card overflow-hidden">
@@ -1414,7 +1414,7 @@ function PostForm() {
                 disabled={postType === POST_TYPE_RECRUIT}
                 required
               >
-                <option value="">Select category</option>
+                <option value="">커뮤니티를 선택하세요</option>
                 {selectableCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -1500,12 +1500,12 @@ function PostForm() {
                       onChange={(e) => setRecruitStatus(e.target.value)}
                       className="input-field !py-2.5"
                     >
-                      <option value={RECRUIT_STATUS_OPEN}>Open</option>
+                      <option value={RECRUIT_STATUS_OPEN}>모집중</option>
                       <option value={RECRUIT_STATUS_CLOSED}>留덇컧</option>
                     </select>
                   ) : (
                     <div className="h-[42px] px-3 rounded-lg border border-ink-200 bg-white text-xs text-ink-600 flex items-center">
-                      <span className="font-medium text-emerald-700">Open</span>
+                      <span className="font-medium text-emerald-700">모집중</span>
                     </div>
                   )}
                 </div>
