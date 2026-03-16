@@ -17,7 +17,7 @@ RUN ls -la /app/dist && \
     test -f /app/dist/index.html || (echo "ERROR: index.html not found in dist!" && exit 1)
 
 # Stage 2: Build blog frontend
-FROM node:18-alpine as blog-builder
+FROM node:20-alpine as blog-builder
 
 WORKDIR /app
 
