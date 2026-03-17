@@ -85,14 +85,6 @@ export default function BlogDetail() {
         )}
       </header>
 
-      {post.thumbnail_url && (
-        <img
-          src={post.thumbnail_url}
-          alt={post.title}
-          className="w-full rounded-lg mb-8"
-        />
-      )}
-
       <div className="prose">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}

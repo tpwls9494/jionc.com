@@ -10,7 +10,7 @@ export default function BlogList() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const pageSize = 10
+  const pageSize = 6
 
   useEffect(() => {
     setPage(1)
@@ -46,12 +46,17 @@ export default function BlogList() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="hero-section mb-10">
+      <section className="hero-section mb-12">
+        <div className="hero-lines">
+          <div className="hero-line hero-line-1" />
+          <div className="hero-line hero-line-2" />
+          <div className="hero-line hero-line-3" />
+        </div>
         <div className="hero-content">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
             Jion Blog
           </h1>
-          <p className="text-base md:text-lg text-white/80 max-w-lg">
+          <p className="text-base md:text-lg text-white/60 max-w-md">
             개발, AI, 그리고 일상에 대한 생각을 기록합니다.
           </p>
         </div>
@@ -67,11 +72,11 @@ export default function BlogList() {
           <p className="text-lg">아직 작성된 글이 없습니다.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
             <article key={post.id} className="blog-card group">
               <Link to={`/${post.slug}`} className="block no-underline">
-                <div className="aspect-[16/9] overflow-hidden rounded-t-lg">
+                <div className="aspect-[16/9] overflow-hidden">
                   {post.thumbnail_url ? (
                     <img
                       src={post.thumbnail_url}
@@ -79,31 +84,16 @@ export default function BlogList() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-ink-200 to-ink-100 flex items-center justify-center">
-                      <span className="text-4xl text-ink-300">
+                    <div className="w-full h-full card-placeholder flex items-center justify-center">
+                      <span className="text-4xl font-bold text-white/20">
                         {post.title.charAt(0)}
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h2 className="text-lg font-bold text-ink-900 group-hover:text-blue-600 transition-colors mb-1 line-clamp-2">
-                    {post.title}
-                  </h2>
-                  {post.summary && (
-                    <p className="text-ink-500 text-sm mb-3 line-clamp-2">
-                      {post.summary}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-ink-400">
-                    <span>
-                      {formatDate(post.published_at || post.created_at)}
-                    </span>
-                    <span>&middot;</span>
-                    <span>조회 {post.views}</span>
-                  </div>
                   {post.tags && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {post.tags
                         .split(',')
                         .map((t) => t.trim())
@@ -118,6 +108,21 @@ export default function BlogList() {
                         ))}
                     </div>
                   )}
+                  <h2 className="text-base font-bold text-ink-900 group-hover:text-blue-600 transition-colors mb-1.5 line-clamp-2">
+                    {post.title}
+                  </h2>
+                  {post.summary && (
+                    <p className="text-ink-400 text-sm mb-3 line-clamp-2">
+                      {post.summary}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-ink-300">
+                    <span>
+                      {formatDate(post.published_at || post.created_at)}
+                    </span>
+                    <span>&middot;</span>
+                    <span>조회 {post.views}</span>
+                  </div>
                 </div>
               </Link>
             </article>
@@ -127,23 +132,33 @@ export default function BlogList() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-12">
+        <div className="flex justify-center items-center gap-1 mt-14">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-sm rounded border border-ink-100 disabled:opacity-40"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-ink-500 hover:bg-paper-200 disabled:opacity-30 transition-colors"
           >
-            Prev
+            &larr;
           </button>
-          <span className="px-3 py-1.5 text-sm text-ink-500">
-            {page} / {totalPages}
-          </span>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors ${
+                p === page
+                  ? 'bg-ink-800 text-white'
+                  : 'text-ink-500 hover:bg-paper-200'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm rounded border border-ink-100 disabled:opacity-40"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-ink-500 hover:bg-paper-200 disabled:opacity-30 transition-colors"
           >
-            Next
+            &rarr;
           </button>
         </div>
       )}

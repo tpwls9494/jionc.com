@@ -87,11 +87,11 @@ body {
   margin: 2em 0;
 }
 
-/* Hero Section */
+/* ── Hero Section ── */
 .hero-section {
-  background: linear-gradient(135deg, #0f0f0f 0%, #2a2a2a 50%, #1a1a1a 100%);
-  border-radius: 12px;
-  padding: 3rem 2rem;
+  background: #0a0a0a;
+  border-radius: 16px;
+  padding: 4rem 2.5rem;
   position: relative;
   overflow: hidden;
 }
@@ -99,12 +99,56 @@ body {
 .hero-section::before {
   content: '';
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-  border-radius: 50%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 40%, rgba(255,255,255,0.04) 0%, transparent 100%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+/* 3D black lines piercing through */
+.hero-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.hero-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 80%, transparent 100%);
+  transform-origin: center;
+}
+
+.hero-line-1 {
+  top: 25%;
+  left: -10%;
+  right: -10%;
+  transform: rotate(-8deg) perspective(400px) rotateY(5deg);
+  box-shadow: 0 0 8px rgba(255,255,255,0.1), 0 0 20px rgba(255,255,255,0.05);
+}
+
+.hero-line-2 {
+  top: 55%;
+  left: -10%;
+  right: -10%;
+  transform: rotate(4deg) perspective(400px) rotateY(-8deg);
+  box-shadow: 0 0 12px rgba(255,255,255,0.08), 0 0 30px rgba(255,255,255,0.03);
+  opacity: 0.6;
+}
+
+.hero-line-3 {
+  top: 78%;
+  left: -10%;
+  right: -10%;
+  transform: rotate(-3deg) perspective(600px) rotateY(12deg);
+  box-shadow: 0 0 6px rgba(255,255,255,0.06);
+  opacity: 0.35;
 }
 
 .hero-content {
@@ -112,7 +156,7 @@ body {
   z-index: 1;
 }
 
-/* Blog Card */
+/* ── Blog Card ── */
 .blog-card {
   background: white;
   border-radius: 12px;
@@ -122,11 +166,15 @@ body {
 }
 
 .blog-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Scrollbar hide for category nav */
+.card-placeholder {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
+}
+
+/* ── Scrollbar hide ── */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
