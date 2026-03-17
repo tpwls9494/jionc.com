@@ -7,6 +7,7 @@ import BlogEditor from './pages/BlogEditor'
 import Login from './pages/Login'
 import { CATEGORIES } from './constants/categories'
 import { authAPI } from './services/api'
+import WorkingPerson from './components/WorkingPerson'
 
 function App() {
   const location = useLocation()
@@ -33,6 +34,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <WorkingPerson />
     </div>
   )
 }
