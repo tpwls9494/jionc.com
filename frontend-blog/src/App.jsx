@@ -43,58 +43,58 @@ function HeroBanner() {
   const { user, handleLogout } = useAuth()
 
   return (
-    <section className="hero-section relative z-10">
-      {/* Top bar */}
-      <div className="max-w-5xl mx-auto px-4 flex items-center justify-between mb-10">
-        <Link to="/" className="text-lg font-bold text-white no-underline">
-          Jion Blog
-        </Link>
-        <nav className="flex items-center gap-3 text-sm">
-          {user?.is_admin && (
-            <Link to="/write" className="px-3 py-1.5 bg-white/10 text-white rounded-lg no-underline hover:bg-white/20 transition-colors">
-              글쓰기
-            </Link>
-          )}
-          {user && (
-            <button onClick={handleLogout} className="text-white/50 hover:text-white/80 transition-colors">
-              로그아웃
-            </button>
-          )}
-          <a href="https://jionc.com" className="text-white/50 hover:text-white/80 no-underline transition-colors">
-            Community
-          </a>
-        </nav>
-      </div>
+    <>
+      {/* Sticky nav bar */}
+      <header className="hero-header sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link to="/" className="text-lg font-bold text-white no-underline">
+            Jion Blog
+          </Link>
+          <nav className="flex items-center gap-3 text-sm">
+            {user?.is_admin && (
+              <Link to="/write" className="px-3 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
+                글쓰기
+              </Link>
+            )}
+            {user && (
+              <button onClick={handleLogout} className="text-white/50 hover:text-white/80 transition-colors">
+                로그아웃
+              </button>
+            )}
+            <a href="https://jionc.com" className="text-white/50 hover:text-white/80 no-underline transition-colors">
+              Community
+            </a>
+          </nav>
+        </div>
+        {/* Category tabs in sticky header */}
+        <div className="max-w-5xl mx-auto px-4 pb-2">
+          <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.key}
+                to={cat.key === 'all' ? '/' : `/?category=${cat.key}`}
+                className={`px-3 py-1.5 text-sm font-medium no-underline whitespace-nowrap rounded-lg transition-colors ${
+                  currentCategory === cat.key
+                    ? 'bg-white text-ink-900'
+                    : 'text-white/50 hover:text-white/80 hover:bg-white/10'
+                }`}
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </header>
 
-      {/* Hero text */}
-      <div className="max-w-5xl mx-auto px-4 mb-10">
-        <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-          Jion Blog
-        </h1>
-        <p className="text-base md:text-lg text-white/50 max-w-md">
-          개발, AI, 그리고 일상에 대한 생각을 기록합니다.
-        </p>
-      </div>
-
-      {/* Category tabs */}
-      <div className="max-w-5xl mx-auto px-4">
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.key}
-              to={cat.key === 'all' ? '/' : `/?category=${cat.key}`}
-              className={`px-3 py-2 text-sm font-medium no-underline whitespace-nowrap rounded-lg transition-colors ${
-                currentCategory === cat.key
-                  ? 'bg-white text-ink-900'
-                  : 'text-white/50 hover:text-white/80 hover:bg-white/10'
-              }`}
-            >
-              {cat.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </section>
+      {/* Hero intro section */}
+      <section className="hero-section relative z-10">
+        <div className="max-w-5xl mx-auto px-4">
+          <p className="text-lg md:text-xl text-white/60 max-w-lg">
+            개발, AI, 그리고 일상에 대한 생각을 기록합니다.
+          </p>
+        </div>
+      </section>
+    </>
   )
 }
 
