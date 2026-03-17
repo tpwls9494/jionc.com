@@ -51,80 +51,103 @@ export default function WorkingPerson() {
         />
         <path d="M92 72 C94 73, 97 73, 99 72" fill="none" stroke="#333" strokeWidth="0.8" />
 
-        {/* Neck (wider, clearly visible below ear) */}
-        <path d="M91 62 L101 62 L102 72 L90 72 Z" fill="#ddd" />
+        {/* Neck (clearly visible below hairline) */}
+        <path d="M89 60 L103 60 L104 72 L88 72 Z" fill="#ddd" />
+        {/* Nape center line */}
+        <path d="M96 60 L96 66" fill="none" stroke="#ccc" strokeWidth="0.4" />
         {/* Neck side shadow */}
-        <path d="M91 62 C90 65, 90 68, 90 72" fill="none" stroke="#c8c8c8" strokeWidth="0.5" />
+        <path d="M89 60 C88 63, 88 67, 88 72" fill="none" stroke="#c8c8c8" strokeWidth="0.5" />
 
         {/* Head */}
         <g className="person-head">
           {/* Base head shape */}
-          <ellipse cx="96" cy="52" rx="13" ry="13" fill="#ddd" />
+          <ellipse cx="96" cy="48" rx="14" ry="14" fill="#ddd" />
 
           {/* Left cheek/jaw visible */}
           <path
-            d="M83 48 C82 52, 82 56, 83 59 C84 61, 86 63, 89 64
-               L89 60 C87 58, 85 55, 84 52 C84 50, 83.5 49, 83 48 Z"
+            d="M82 46 C81 50, 81 54, 82 57 C83 59, 85 60, 88 61
+               L88 57 C86 55, 84 52, 83 49 C83 47, 82.5 46.5, 82 46 Z"
             fill="#ddd"
           />
-          {/* Jawline shadow */}
-          <path
-            d="M84 59 C85 61, 87 62, 89 63"
-            fill="none" stroke="#c5c5c5" strokeWidth="0.6" strokeLinecap="round"
-          />
+          {/* Jawline */}
+          <path d="M83 57 C84 59, 86 60, 88 61" fill="none" stroke="#c5c5c5" strokeWidth="0.5" strokeLinecap="round" />
 
-          {/* Left ear (clearly visible, hair ends above it) */}
-          <ellipse cx="84.5" cy="55" rx="2.5" ry="3.5" fill="#d0d0d0" />
-          <ellipse cx="84.5" cy="55" rx="1.5" ry="2.5" fill="#c8c8c8" />
+          {/* Left ear (fully visible — hair tapers above it) */}
+          <ellipse cx="83" cy="52" rx="3" ry="4.5" fill="#d5d5d5" />
+          {/* Inner ear */}
+          <ellipse cx="83.5" cy="52" rx="1.8" ry="3" fill="#ccc" />
+          {/* Ear canal hint */}
+          <ellipse cx="83.8" cy="51.5" rx="0.8" ry="1.5" fill="#c0c0c0" />
           {/* Earlobe */}
-          <circle cx="84.5" cy="58" r="1" fill="#d0d0d0" />
+          <path d="M82 55.5 C82 57, 83 57.5, 84 57 C83.5 57, 82.5 56.5, 82 55.5 Z" fill="#d5d5d5" />
 
-          {/* Hair — covers top & back, stops well above ear on left */}
-          {/* Main hair mass */}
+          {/* === Hair — Korean male tapered back cut === */}
+          {/* Main hair volume on top (longer, swept right) */}
           <path
-            d="M88 46 C87 40, 89 34, 96 32 C106 34, 110 40, 109 48
-               C109 54, 108 58, 106 62 C104 64, 100 66, 96 66
-               C94 66, 92 65, 91 63 C90 61, 89 57, 88 52 Z"
+            d="M86 42 C85 36, 88 30, 96 28 C104 30, 110 36, 110 42
+               C110 46, 109 49, 108 51 C106 48, 102 44, 96 43
+               C92 43, 88 44, 86 46 Z"
             fill="#333"
           />
-          {/* Top crown highlight */}
+          {/* Top swept layer (direction: left to right) */}
           <path
-            d="M90 36 C92 33, 96 31, 100 32 C105 33, 108 36, 109 40
-               C107 37, 103 34, 98 33 C94 33, 91 34, 90 36 Z"
+            d="M86 38 C88 33, 93 30, 98 29 C96 31, 92 33, 88 37 Z"
             fill="#3a3a3a"
           />
-          {/* Layer texture */}
-          <path d="M91 34 C93 32, 97 31, 101 32 C98 33, 94 33, 91 35 Z" fill="#444" />
-
-          {/* Right side layers (longer, away from viewer) */}
           <path
-            d="M109 46 C110 52, 110 56, 109 61 C108 63, 107 65, 106 66
-               C107 64, 108 60, 108.5 54 C109 50, 109 48, 108.5 46 Z"
-            fill="#3a3a3a"
+            d="M90 34 C93 31, 98 29, 103 30 C100 32, 96 33, 92 35 Z"
+            fill="#3d3d3d"
           />
 
-          {/* Hair texture lines on back */}
-          <path d="M96 34 C96 40, 96 48, 96 56" fill="none" stroke="#3a3a3a" strokeWidth="0.5" />
-          <path d="M100 35 C101 41, 102 49, 102 57" fill="none" stroke="#3a3a3a" strokeWidth="0.4" />
-
-          {/* Left side — hair ends above ear, clean cut */}
+          {/* Back of head — gradual taper from thick top to thin nape */}
+          {/* Upper back (still thick) */}
           <path
-            d="M88 46 C87 42, 88 38, 90 36
-               C89 40, 88 44, 88 48 C88 50, 88 51, 88.5 52
-               C88 51, 88 49, 88 47 Z"
+            d="M108 51 C109 48, 110 44, 110 42 C110 46, 110 50, 109 53
+               C108 55, 107 57, 106 58 L106 54 Z"
+            fill="#333"
+          />
+          {/* Mid back (medium density) */}
+          <path
+            d="M90 54 C89 52, 88 49, 87 46 C87 48, 87.5 51, 88 53
+               L90 56 C91 57, 94 58, 98 58 C102 58, 105 57, 106 55
+               L106 58 C104 60, 100 61, 96 61 C92 61, 89 59, 88 57 Z"
             fill="#3a3a3a"
           />
-
-          {/* Short sideburn in front of ear */}
+          {/* Lower back (thin, tapered — skin showing through) */}
           <path
-            d="M86 50 C85.5 52, 85.5 53.5, 86 54 C86.5 53, 86.5 52, 86 50.5 Z"
+            d="M90 57 C89 56, 88 54, 88 53
+               C88.5 55, 89 56.5, 90 58 C92 60, 94 61, 97 61
+               C100 61, 103 60, 105 58 C106 57, 106 55, 106 54
+               C106 56, 105 58, 104 59 C102 60, 99 60.5, 96 60.5
+               C93 60.5, 91 59, 90 57 Z"
             fill="#444"
           />
+          {/* Nape taper (very short, almost skin) */}
+          <path
+            d="M91 59 C93 60.5, 95 61, 97 61 C99 61, 101 60.5, 103 59
+               C102 60, 99 61, 97 61 C95 61, 93 60, 91 59 Z"
+            fill="#555"
+          />
 
-          {/* Nape wisps */}
-          <path d="M93 64 C92 67, 92 68, 93 68.5 C93.5 67.5, 93 66, 93 65 Z" fill="#333" />
-          <path d="M100 64 C101 67, 101 68, 100 68.5 C99.5 67.5, 100 66, 100 65 Z" fill="#333" />
-          <path d="M104 62 C105 65, 106 67, 105 68 C104 67, 104 65, 103.5 63 Z" fill="#333" />
+          {/* Hair flow lines (swept direction: ← to →) */}
+          <path d="M87 40 C90 38, 96 37, 104 38" fill="none" stroke="#3a3a3a" strokeWidth="0.6" />
+          <path d="M87 43 C91 41, 97 40, 106 42" fill="none" stroke="#3d3d3d" strokeWidth="0.5" />
+          <path d="M88 46 C92 44, 98 43, 107 45" fill="none" stroke="#3a3a3a" strokeWidth="0.5" />
+          <path d="M88 49 C93 47, 99 46, 107 48" fill="none" stroke="#444" strokeWidth="0.4" />
+          <path d="M89 52 C94 50, 100 50, 106 52" fill="none" stroke="#444" strokeWidth="0.4" />
+          <path d="M90 55 C94 54, 100 53, 105 55" fill="none" stroke="#4a4a4a" strokeWidth="0.3" />
+
+          {/* Left side — clean taper above ear */}
+          <path
+            d="M86 46 C85 44, 85 41, 86 38 C85.5 40, 85 43, 85.5 46
+               C86 48, 86.5 50, 87 51 C86.5 50, 86 48, 86 46 Z"
+            fill="#3a3a3a"
+          />
+          {/* Sideburn (short, clean) */}
+          <path
+            d="M85 48 C84.5 50, 84.5 51, 85 52 C85.5 51, 85.5 50, 85 48.5 Z"
+            fill="#555"
+          />
         </g>
 
         {/* === Arms & Hands === */}
