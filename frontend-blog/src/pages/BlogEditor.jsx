@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { blogAPI } from '../services/api'
+import { CATEGORIES } from '../constants/categories'
+
+const TAG_OPTIONS = CATEGORIES.filter((c) => c.key !== 'all')
 
 export default function BlogEditor() {
   const { id } = useParams()
@@ -13,7 +16,7 @@ export default function BlogEditor() {
     summary: '',
     thumbnail_url: '',
     tags: '',
-    is_published: false,
+    is_published: true,
   })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -23,15 +26,10 @@ export default function BlogEditor() {
     if (!isEdit) return
     setLoading(true)
     blogAPI
-      .getPosts({ page: 1, page_size: 100 })
-      .then(() => {
-        // For edit, we need to fetch by ID — use drafts endpoint which includes unpublished
-        return blogAPI.getDrafts({ page: 1, page_size: 100 })
-      })
+      .getDrafts({ page: 1, page_size: 100 })
       .then((res) => {
         const post = res.data.items.find((p) => p.id === Number(id))
         if (post) {
-          // Fetch full content via slug
           return blogAPI.getPost(post.slug)
         }
         throw new Error('not found')
@@ -44,7 +42,7 @@ export default function BlogEditor() {
           summary: p.summary || '',
           thumbnail_url: p.thumbnail_url || '',
           tags: p.tags || '',
-          is_published: p.is_published || false,
+          is_published: p.is_published ?? true,
         })
       })
       .catch(() => setError('글을 불러올 수 없습니다.'))
@@ -58,6 +56,22 @@ export default function BlogEditor() {
       [name]: type === 'checkbox' ? checked : value,
     }))
   }
+
+  const toggleTag = (tagKey) => {
+    const currentTags = form.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    const newTags = currentTags.includes(tagKey)
+      ? currentTags.filter((t) => t !== tagKey)
+      : [...currentTags, tagKey]
+    setForm((prev) => ({ ...prev, tags: newTags.join(', ') }))
+  }
+
+  const selectedTags = form.tags
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -128,25 +142,47 @@ export default function BlogEditor() {
           <label className="block text-sm font-medium text-ink-700 mb-1">
             썸네일 URL
           </label>
+          <p className="text-xs text-ink-400 mb-1.5">
+            블로그 목록에서 카드 이미지로 표시됩니다. 비워두면 글 제목 첫
+            글자로 대체됩니다.
+          </p>
           <input
             name="thumbnail_url"
             value={form.thumbnail_url}
             onChange={handleChange}
+            placeholder="https://example.com/image.jpg"
             className="w-full px-3 py-2 border border-ink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          {form.thumbnail_url && (
+            <img
+              src={form.thumbnail_url}
+              alt="썸네일 미리보기"
+              className="mt-2 h-32 object-cover rounded-lg border border-ink-100"
+              onError={(e) => (e.target.style.display = 'none')}
+            />
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-ink-700 mb-1">
-            태그 (쉼표로 구분)
+          <label className="block text-sm font-medium text-ink-700 mb-2">
+            카테고리
           </label>
-          <input
-            name="tags"
-            value={form.tags}
-            onChange={handleChange}
-            placeholder="React, FastAPI, Docker"
-            className="w-full px-3 py-2 border border-ink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex flex-wrap gap-2">
+            {TAG_OPTIONS.map((tag) => (
+              <button
+                key={tag.key}
+                type="button"
+                onClick={() => toggleTag(tag.key)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  selectedTags.includes(tag.key)
+                    ? 'bg-ink-800 text-white border-ink-800'
+                    : 'bg-white text-ink-500 border-ink-200 hover:border-ink-400'
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -183,7 +219,7 @@ export default function BlogEditor() {
             disabled={saving}
             className="px-5 py-2 bg-ink-800 text-white rounded-lg text-sm hover:bg-ink-900 disabled:opacity-50"
           >
-            {saving ? '저장 중...' : isEdit ? '수정' : '작성'}
+            {saving ? '저장 중...' : isEdit ? '수정' : '발행'}
           </button>
           <button
             type="button"
