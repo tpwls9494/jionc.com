@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import { blogAPI } from '../services/api'
+import { blogAPI, authAPI } from '../services/api'
 
 export default function BlogDetail() {
   const { slug } = useParams()
@@ -11,6 +11,15 @@ export default function BlogDetail() {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    authAPI.getMe()
+      .then((res) => setUser(res.data))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -63,7 +72,33 @@ export default function BlogDetail() {
   return (
     <article>
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-ink-900 mb-3">{post.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-bold text-ink-900 mb-3">{post.title}</h1>
+          {user?.is_admin && (
+            <div className="flex items-center gap-2 shrink-0 mt-1">
+              <Link
+                to={`/edit/${post.slug}`}
+                className="px-3 py-1.5 text-sm bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors"
+              >
+                수정
+              </Link>
+              <button
+                onClick={async () => {
+                  if (!confirm('정말 삭제하시겠습니까?')) return
+                  try {
+                    await blogAPI.delete(post.id)
+                    navigate('/')
+                  } catch {
+                    alert('삭제에 실패했습니다.')
+                  }
+                }}
+                className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3 text-sm text-ink-400">
           <span>{post.author?.username}</span>
           <span>&middot;</span>

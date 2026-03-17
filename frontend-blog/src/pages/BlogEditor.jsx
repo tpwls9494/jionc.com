@@ -6,9 +6,9 @@ import { CATEGORIES } from '../constants/categories'
 const TAG_OPTIONS = CATEGORIES.filter((c) => c.key !== 'all')
 
 export default function BlogEditor() {
-  const { id } = useParams()
+  const { slug } = useParams()
   const navigate = useNavigate()
-  const isEdit = Boolean(id)
+  const isEdit = Boolean(slug)
 
   const [form, setForm] = useState({
     title: '',
@@ -18,6 +18,7 @@ export default function BlogEditor() {
     tags: '',
     is_published: true,
   })
+  const [postId, setPostId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -26,16 +27,10 @@ export default function BlogEditor() {
     if (!isEdit) return
     setLoading(true)
     blogAPI
-      .getDrafts({ page: 1, page_size: 100 })
-      .then((res) => {
-        const post = res.data.items.find((p) => p.id === Number(id))
-        if (post) {
-          return blogAPI.getPost(post.slug)
-        }
-        throw new Error('not found')
-      })
+      .getPost(slug)
       .then((res) => {
         const p = res.data
+        setPostId(p.id)
         setForm({
           title: p.title || '',
           content: p.content || '',
@@ -47,7 +42,7 @@ export default function BlogEditor() {
       })
       .catch(() => setError('글을 불러올 수 없습니다.'))
       .finally(() => setLoading(false))
-  }, [id, isEdit])
+  }, [slug, isEdit])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -80,7 +75,7 @@ export default function BlogEditor() {
 
     try {
       if (isEdit) {
-        await blogAPI.update(id, form)
+        await blogAPI.update(postId, form)
       } else {
         await blogAPI.create(form)
       }
