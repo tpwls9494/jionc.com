@@ -45,18 +45,6 @@ export default function BlogList() {
 
   return (
     <div>
-      {/* Hero Section — flush to top */}
-      <section className="hero-section mb-12 -mt-8">
-        <div className="hero-content">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-            Jion Blog
-          </h1>
-          <p className="text-base md:text-lg text-white/60 max-w-md">
-            개발, AI, 그리고 일상에 대한 생각을 기록합니다.
-          </p>
-        </div>
-      </section>
-
       {/* Posts */}
       {loading ? (
         <div className="flex justify-center py-20">
