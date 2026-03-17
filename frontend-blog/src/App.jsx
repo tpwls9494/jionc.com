@@ -107,8 +107,8 @@ function HeroBanner() {
         <div className="hero-content max-w-5xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <p className="text-lg md:text-xl text-white/60 max-w-lg leading-relaxed">
-                개발, AI, 그리고 일상에 대한 생각을 기록합니다.
+              <p className="text-sm text-white/30 font-medium tracking-wide">
+                Dev · AI · Life
               </p>
             </div>
             {latestPost && (

@@ -231,15 +231,6 @@ export default function BlogDetail() {
             )}
           </div>
           <div className="flex items-center gap-3 text-sm text-ink-400 mt-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-ink-800 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white">
-                  {(post.author?.username || 'J').charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span className="font-medium text-ink-600">{post.author?.username}</span>
-            </div>
-            <span className="text-ink-200">&middot;</span>
             <span>{formatDate(post.published_at || post.created_at)}</span>
             <span className="text-ink-200">&middot;</span>
             <span>조회 {post.views}</span>

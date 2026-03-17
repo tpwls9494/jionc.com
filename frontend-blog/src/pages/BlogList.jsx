@@ -56,13 +56,6 @@ export default function BlogList() {
     })
   }
 
-  const estimateReadTime = (summary) => {
-    if (!summary) return null
-    const charCount = summary.length
-    const minutes = Math.max(1, Math.ceil(charCount / 200))
-    return `${minutes}분`
-  }
-
   return (
     <div>
       {loading ? (
@@ -97,12 +90,6 @@ export default function BlogList() {
                         {post.title.charAt(0)}
                       </span>
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.06),transparent_70%)]" />
-                    </div>
-                  )}
-                  {/* Read time overlay */}
-                  {estimateReadTime(post.summary) && (
-                    <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[11px] text-white/80 font-medium">
-                      {estimateReadTime(post.summary)} 읽기
                     </div>
                   )}
                 </div>
