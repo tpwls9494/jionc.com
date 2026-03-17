@@ -67,6 +67,11 @@ function HeroBanner() {
           </a>
         </nav>
       </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <p className="text-[11px] text-white/25 font-medium tracking-widest uppercase pt-0.5 pb-2">
+          Dev · AI · Life
+        </p>
+      </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2">
         <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {CATEGORIES.map((cat) => (
@@ -83,11 +88,6 @@ function HeroBanner() {
             </Link>
           ))}
         </nav>
-      </div>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-3">
-        <p className="text-[11px] text-white/25 font-medium tracking-widest uppercase">
-          Dev · AI · Life
-        </p>
       </div>
     </header>
   )
