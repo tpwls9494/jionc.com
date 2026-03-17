@@ -200,100 +200,111 @@ body {
 /* ── Working Person Animation (side view) ── */
 .working-person {
   position: fixed;
-  bottom: 16px;
-  left: 16px;
-  width: 140px;
-  height: 130px;
+  bottom: 12px;
+  left: 12px;
+  width: 110px;
+  height: 100px;
   pointer-events: none;
   z-index: 5;
-  opacity: 0.55;
+  opacity: 0.5;
   transition: opacity 0.3s ease;
 }
 
 .working-person:hover {
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
-/* Finger tapping — far hand (타닥) */
+/* Typing — natural staggered rhythm */
 .fingers-far {
-  animation: tap-far 0.3s ease-in-out infinite;
+  animation: tap-a 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   transform-origin: 62px 94px;
 }
 
-@keyframes tap-far {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-10deg) translateY(-2px); }
-}
-
-/* Finger tapping — near hand (타닥) offset */
 .fingers-near {
-  animation: tap-near 0.3s ease-in-out infinite;
-  animation-delay: 0.12s;
+  animation: tap-b 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0.2s;
   transform-origin: 71px 93px;
 }
 
-@keyframes tap-near {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-12deg) translateY(-2.5px); }
+@keyframes tap-a {
+  0%, 30%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-8deg) translateY(-1.5px); }
+  20% { transform: rotate(0deg); }
+  50% { transform: rotate(-5deg) translateY(-1px); }
+  60% { transform: rotate(0deg); }
 }
 
-/* Hand bob while typing */
+@keyframes tap-b {
+  0%, 25%, 100% { transform: rotate(0deg); }
+  8% { transform: rotate(-6deg) translateY(-1px); }
+  16% { transform: rotate(0deg); }
+  40% { transform: rotate(-9deg) translateY(-2px); }
+  50% { transform: rotate(0deg); }
+  70% { transform: rotate(-4deg) translateY(-0.8px); }
+  78% { transform: rotate(0deg); }
+}
+
+/* Hand micro-movement while typing */
 .hand-far {
-  animation: hand-bob-far 0.6s ease-in-out infinite;
+  animation: hand-a 1.2s ease-in-out infinite;
   transform-origin: 64px 95px;
 }
 
-@keyframes hand-bob-far {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
-}
-
 .hand-near {
-  animation: hand-bob-near 0.6s ease-in-out infinite;
-  animation-delay: 0.25s;
+  animation: hand-b 1.2s ease-in-out infinite;
+  animation-delay: 0.4s;
   transform-origin: 73px 94px;
 }
 
-@keyframes hand-bob-near {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
+@keyframes hand-a {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-0.5px) translateX(0.3px); }
+  50% { transform: translateY(0) translateX(-0.3px); }
+  75% { transform: translateY(-0.3px) translateX(0.2px); }
 }
 
-/* Subtle head bob (side view) */
+@keyframes hand-b {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  30% { transform: translateY(-0.6px) translateX(-0.3px); }
+  60% { transform: translateY(0) translateX(0.4px); }
+  80% { transform: translateY(-0.4px); }
+}
+
+/* Subtle head nod */
 .person-head {
-  animation: head-bob 3s ease-in-out infinite;
+  animation: head-bob 4s ease-in-out infinite;
   transform-origin: 93px 58px;
 }
 
 @keyframes head-bob {
   0%, 100% { transform: rotate(0deg); }
-  30% { transform: rotate(1deg) translateY(-0.5px); }
-  70% { transform: rotate(-0.5deg); }
+  25% { transform: rotate(0.8deg) translateY(-0.3px); }
+  60% { transform: rotate(-0.4deg); }
 }
 
-/* Screen content typing effect */
+/* Screen content */
 .screen-lines line {
-  animation: screen-flicker 2s ease-in-out infinite;
+  animation: screen-flicker 2.5s ease-in-out infinite;
 }
 
 .screen-lines line:nth-child(1) { animation-delay: 0s; }
-.screen-lines line:nth-child(2) { animation-delay: 0.3s; }
-.screen-lines line:nth-child(3) { animation-delay: 0.6s; }
-.screen-lines line:nth-child(4) { animation-delay: 0.9s; }
-.screen-lines line:nth-child(5) { animation-delay: 1.2s; }
+.screen-lines line:nth-child(2) { animation-delay: 0.4s; }
+.screen-lines line:nth-child(3) { animation-delay: 0.8s; }
+.screen-lines line:nth-child(4) { animation-delay: 1.2s; }
+.screen-lines line:nth-child(5) { animation-delay: 1.6s; }
 
 @keyframes screen-flicker {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.9; }
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
 }
 
-/* Hide on small screens */
+/* Smaller on mobile */
 @media (max-width: 768px) {
   .working-person {
-    width: 100px;
-    height: 90px;
-    bottom: 8px;
-    left: 8px;
-    opacity: 0.4;
+    width: 80px;
+    height: 72px;
+    bottom: 6px;
+    left: 6px;
+    opacity: 0.35;
   }
 }
