@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import BlogList from './pages/BlogList'
 import BlogDetail from './pages/BlogDetail'
 import BlogEditor from './pages/BlogEditor'
+import DraftsList from './pages/DraftsList'
 import Login from './pages/Login'
 import { CATEGORIES } from './constants/categories'
 import { authAPI } from './services/api'
@@ -31,6 +32,7 @@ function App() {
           <Routes>
             <Route path="/" element={<BlogList />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/drafts" element={<DraftsList />} />
             <Route path="/write" element={<BlogEditor />} />
             <Route path="/edit/:slug" element={<BlogEditor />} />
             <Route path="/:slug" element={<BlogDetail />} />
@@ -55,9 +57,14 @@ function HeroBanner() {
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link to="/write" className="px-3.5 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
-              글쓰기
-            </Link>
+            <>
+              <Link to="/drafts" className="text-white/40 hover:text-white/70 no-underline transition-colors">
+                초안
+              </Link>
+              <Link to="/write" className="px-3.5 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
+                글쓰기
+              </Link>
+            </>
           )}
           {user && (
             <button onClick={handleLogout} className="text-white/40 hover:text-white/70 transition-colors">
@@ -106,9 +113,14 @@ function SimpleHeader() {
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link to="/write" className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
-              글쓰기
-            </Link>
+            <>
+              <Link to="/drafts" className="text-ink-400 hover:text-ink-700 no-underline transition-colors">
+                초안
+              </Link>
+              <Link to="/write" className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
+                글쓰기
+              </Link>
+            </>
           )}
           {user && (
             <button onClick={handleLogout} className="text-ink-400 hover:text-ink-700 transition-colors">

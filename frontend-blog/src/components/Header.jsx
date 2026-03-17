@@ -36,12 +36,20 @@ export default function Header() {
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link
-              to="/write"
-              className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors"
-            >
-              글쓰기
-            </Link>
+            <>
+              <Link
+                to="/drafts"
+                className="text-ink-400 hover:text-ink-700 no-underline transition-colors"
+              >
+                초안
+              </Link>
+              <Link
+                to="/write"
+                className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors"
+              >
+                글쓰기
+              </Link>
+            </>
           )}
           {user && (
             <button
