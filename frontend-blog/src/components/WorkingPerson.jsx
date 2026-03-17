@@ -52,11 +52,11 @@ export default function WorkingPerson() {
         <path d="M92 72 C94 73, 97 73, 99 72" fill="none" stroke="#333" strokeWidth="0.8" />
 
         {/* Neck (skin visible below hairline) */}
-        <path d="M86 60 L103 60 L104 72 L85 72 Z" fill="#ddd" />
+        <path d="M89 61 L102 61 L103 72 L88 72 Z" fill="#ddd" />
         {/* Nape center line */}
         <path d="M96 60 L96 66" fill="none" stroke="#ccc" strokeWidth="0.4" />
         {/* Neck side shadow */}
-        <path d="M86 60 C85 63, 85 67, 85 72" fill="none" stroke="#c8c8c8" strokeWidth="0.5" />
+        <path d="M89 61 C88 64, 88 68, 88 72" fill="none" stroke="#c8c8c8" strokeWidth="0.5" />
 
         {/* Head */}
         <g className="person-head">
