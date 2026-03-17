@@ -29,16 +29,16 @@ export default function Header() {
   }
 
   return (
-    <header className="border-b border-ink-100 bg-white sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold text-ink-900 no-underline">
+    <header className="border-b border-ink-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <Link to="/" className="text-lg font-bold text-ink-900 no-underline tracking-tight">
           Jion Blog
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
             <Link
               to="/write"
-              className="px-3 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors"
+              className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors"
             >
               글쓰기
             </Link>
@@ -53,22 +53,22 @@ export default function Header() {
           )}
           <a
             href="https://jionc.com"
-            className="text-ink-500 hover:text-ink-800 no-underline transition-colors"
+            className="text-ink-400 hover:text-ink-700 no-underline transition-colors"
           >
             Community
           </a>
         </nav>
       </div>
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mb-px">
           {CATEGORIES.map((cat) => (
             <Link
               key={cat.key}
               to={cat.key === 'all' ? '/' : `/?category=${cat.key}`}
-              className={`px-3 py-2.5 text-sm font-medium no-underline whitespace-nowrap border-b-2 transition-colors ${
+              className={`px-3.5 py-2.5 text-sm font-medium no-underline whitespace-nowrap border-b-2 transition-all duration-200 ${
                 currentCategory === cat.key
                   ? 'border-ink-900 text-ink-900'
-                  : 'border-transparent text-ink-400 hover:text-ink-700'
+                  : 'border-transparent text-ink-400 hover:text-ink-700 hover:border-ink-200'
               }`}
             >
               {cat.label}

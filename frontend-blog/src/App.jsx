@@ -6,7 +6,7 @@ import BlogDetail from './pages/BlogDetail'
 import BlogEditor from './pages/BlogEditor'
 import Login from './pages/Login'
 import { CATEGORIES } from './constants/categories'
-import { authAPI } from './services/api'
+import { authAPI, blogAPI } from './services/api'
 import WorkingPerson from './components/WorkingPerson'
 
 function App() {
@@ -24,14 +24,16 @@ function App() {
 
       {isHome ? <HeroBanner /> : <SimpleHeader />}
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8 relative z-10">
-        <Routes>
-          <Route path="/" element={<BlogList />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/write" element={<BlogEditor />} />
-          <Route path="/edit/:slug" element={<BlogEditor />} />
-          <Route path="/:slug" element={<BlogDetail />} />
-        </Routes>
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-10 relative z-10">
+        <div className="page-enter" key={location.pathname}>
+          <Routes>
+            <Route path="/" element={<BlogList />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/write" element={<BlogEditor />} />
+            <Route path="/edit/:slug" element={<BlogEditor />} />
+            <Route path="/:slug" element={<BlogDetail />} />
+          </Routes>
+        </div>
       </main>
       <Footer />
       <WorkingPerson />
@@ -43,42 +45,54 @@ function HeroBanner() {
   const [searchParams] = useSearchParams()
   const currentCategory = searchParams.get('category') || 'all'
   const { user, handleLogout } = useAuth()
+  const [latestPost, setLatestPost] = useState(null)
+
+  useEffect(() => {
+    blogAPI
+      .getPosts({ page: 1, page_size: 1 })
+      .then((res) => {
+        if (res.data.items?.length > 0) {
+          setLatestPost(res.data.items[0])
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <>
       {/* Sticky nav bar */}
       <header className="hero-header sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="text-lg font-bold text-white no-underline">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="text-lg font-bold text-white no-underline tracking-tight">
             Jion Blog
           </Link>
           <nav className="flex items-center gap-3 text-sm">
             {user?.is_admin && (
-              <Link to="/write" className="px-3 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
+              <Link to="/write" className="px-3.5 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
                 글쓰기
               </Link>
             )}
             {user && (
-              <button onClick={handleLogout} className="text-white/50 hover:text-white/80 transition-colors">
+              <button onClick={handleLogout} className="text-white/40 hover:text-white/70 transition-colors">
                 로그아웃
               </button>
             )}
-            <a href="https://jionc.com" className="text-white/50 hover:text-white/80 no-underline transition-colors">
+            <a href="https://jionc.com" className="text-white/40 hover:text-white/70 no-underline transition-colors">
               Community
             </a>
           </nav>
         </div>
         {/* Category tabs in sticky header */}
-        <div className="max-w-5xl mx-auto px-4 pb-2">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2">
           <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.key}
                 to={cat.key === 'all' ? '/' : `/?category=${cat.key}`}
-                className={`px-3 py-1.5 text-sm font-medium no-underline whitespace-nowrap rounded-lg transition-colors ${
+                className={`px-3.5 py-1.5 text-sm font-medium no-underline whitespace-nowrap rounded-lg transition-all duration-200 ${
                   currentCategory === cat.key
                     ? 'bg-white text-ink-900'
-                    : 'text-white/50 hover:text-white/80 hover:bg-white/10'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/8'
                 }`}
               >
                 {cat.label}
@@ -90,10 +104,32 @@ function HeroBanner() {
 
       {/* Hero intro section */}
       <section className="hero-section relative z-10">
-        <div className="max-w-5xl mx-auto px-4">
-          <p className="text-lg md:text-xl text-white/60 max-w-lg">
-            개발, AI, 그리고 일상에 대한 생각을 기록합니다.
-          </p>
+        <div className="hero-content max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <p className="text-lg md:text-xl text-white/60 max-w-lg leading-relaxed">
+                개발, AI, 그리고 일상에 대한 생각을 기록합니다.
+              </p>
+            </div>
+            {latestPost && (
+              <Link
+                to={`/${latestPost.slug}`}
+                className="group hidden sm:flex items-center gap-3 no-underline shrink-0"
+              >
+                <div className="text-right">
+                  <span className="block text-[11px] text-white/30 font-medium uppercase tracking-wider mb-0.5">Latest</span>
+                  <span className="block text-sm text-white/60 group-hover:text-white/80 transition-colors font-medium truncate max-w-[240px]">
+                    {latestPost.title}
+                  </span>
+                </div>
+                <div className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center group-hover:border-white/30 transition-colors">
+                  <svg className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </div>
+              </Link>
+            )}
+          </div>
         </div>
       </section>
     </>
@@ -104,14 +140,14 @@ function SimpleHeader() {
   const { user, handleLogout } = useAuth()
 
   return (
-    <header className="border-b border-ink-100 bg-white sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold text-ink-900 no-underline">
+    <header className="border-b border-ink-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <Link to="/" className="text-lg font-bold text-ink-900 no-underline tracking-tight">
           Jion Blog
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link to="/write" className="px-3 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
+            <Link to="/write" className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
               글쓰기
             </Link>
           )}
@@ -120,7 +156,7 @@ function SimpleHeader() {
               로그아웃
             </button>
           )}
-          <a href="https://jionc.com" className="text-ink-500 hover:text-ink-800 no-underline transition-colors">
+          <a href="https://jionc.com" className="text-ink-400 hover:text-ink-700 no-underline transition-colors">
             Community
           </a>
         </nav>
