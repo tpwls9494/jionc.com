@@ -46,42 +46,38 @@ function HeroBanner() {
   const currentCategory = searchParams.get('category') || 'all'
   const { user, handleLogout } = useAuth()
   return (
-    <header className="border-b border-ink-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-[#0a0a0a] sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="text-lg font-bold text-ink-900 no-underline tracking-tight">
-            Jion Blog
-          </Link>
-          <span className="hidden sm:inline text-xs text-ink-300 font-medium tracking-wide">
-            Dev · AI · Life
-          </span>
-        </div>
+        <Link to="/" className="no-underline">
+          <span className="text-lg font-bold text-white tracking-tight block leading-none">Jion Blog</span>
+          <span className="text-[10px] text-white/30 font-medium tracking-widest uppercase">Dev · AI · Life</span>
+        </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link to="/write" className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
+            <Link to="/write" className="px-3.5 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
               글쓰기
             </Link>
           )}
           {user && (
-            <button onClick={handleLogout} className="text-ink-400 hover:text-ink-700 transition-colors">
+            <button onClick={handleLogout} className="text-white/40 hover:text-white/70 transition-colors">
               로그아웃
             </button>
           )}
-          <a href="https://jionc.com" className="text-ink-400 hover:text-ink-700 no-underline transition-colors">
+          <a href="https://jionc.com" className="text-white/40 hover:text-white/70 no-underline transition-colors">
             Community
           </a>
         </nav>
       </div>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mb-px">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2">
+        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {CATEGORIES.map((cat) => (
             <Link
               key={cat.key}
               to={cat.key === 'all' ? '/' : `/?category=${cat.key}`}
-              className={`px-3.5 py-2.5 text-sm font-medium no-underline whitespace-nowrap border-b-2 transition-all duration-200 ${
+              className={`px-3.5 py-1.5 text-sm font-medium no-underline whitespace-nowrap rounded-lg transition-all duration-200 ${
                 currentCategory === cat.key
-                  ? 'border-ink-900 text-ink-900'
-                  : 'border-transparent text-ink-400 hover:text-ink-700 hover:border-ink-200'
+                  ? 'bg-white text-ink-900'
+                  : 'text-white/40 hover:text-white/70 hover:bg-white/8'
               }`}
             >
               {cat.label}
@@ -97,23 +93,24 @@ function SimpleHeader() {
   const { user, handleLogout } = useAuth()
 
   return (
-    <header className="border-b border-ink-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-[#0a0a0a] sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold text-ink-900 no-underline tracking-tight">
-          Jion Blog
+        <Link to="/" className="no-underline">
+          <span className="text-lg font-bold text-white tracking-tight block leading-none">Jion Blog</span>
+          <span className="text-[10px] text-white/30 font-medium tracking-widest uppercase">Dev · AI · Life</span>
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {user?.is_admin && (
-            <Link to="/write" className="px-3.5 py-1.5 bg-ink-800 text-white rounded-lg no-underline hover:bg-ink-900 transition-colors">
+            <Link to="/write" className="px-3.5 py-1.5 bg-white/15 text-white rounded-lg no-underline hover:bg-white/25 transition-colors">
               글쓰기
             </Link>
           )}
           {user && (
-            <button onClick={handleLogout} className="text-ink-400 hover:text-ink-700 transition-colors">
+            <button onClick={handleLogout} className="text-white/40 hover:text-white/70 transition-colors">
               로그아웃
             </button>
           )}
-          <a href="https://jionc.com" className="text-ink-400 hover:text-ink-700 no-underline transition-colors">
+          <a href="https://jionc.com" className="text-white/40 hover:text-white/70 no-underline transition-colors">
             Community
           </a>
         </nav>
