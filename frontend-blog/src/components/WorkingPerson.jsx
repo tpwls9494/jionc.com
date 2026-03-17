@@ -51,79 +51,80 @@ export default function WorkingPerson() {
         />
         <path d="M92 72 C94 73, 97 73, 99 72" fill="none" stroke="#333" strokeWidth="0.8" />
 
-        {/* Neck */}
-        <path d="M94 64 L98 64 L99 72 L93 72 Z" fill="#ddd" />
+        {/* Neck (wider, clearly visible below ear) */}
+        <path d="M91 62 L101 62 L102 72 L90 72 Z" fill="#ddd" />
+        {/* Neck side shadow */}
+        <path d="M91 62 C90 65, 90 68, 90 72" fill="none" stroke="#c8c8c8" strokeWidth="0.5" />
 
         {/* Head */}
         <g className="person-head">
           {/* Base head shape */}
-          <ellipse cx="96" cy="54" rx="13" ry="14" fill="#ddd" />
+          <ellipse cx="96" cy="52" rx="13" ry="13" fill="#ddd" />
 
-          {/* Left cheek/jaw visible — face skin peeking out */}
+          {/* Left cheek/jaw visible */}
           <path
-            d="M83 50 C82 54, 82 58, 83 62 C84 65, 86 67, 89 68
-               L89 64 C87 62, 85 58, 84 54 C84 52, 83.5 51, 83 50 Z"
+            d="M83 48 C82 52, 82 56, 83 59 C84 61, 86 63, 89 64
+               L89 60 C87 58, 85 55, 84 52 C84 50, 83.5 49, 83 48 Z"
             fill="#ddd"
           />
-          {/* Jawline shadow (subtle definition) */}
+          {/* Jawline shadow */}
           <path
-            d="M84 62 C85 64, 87 66, 89 67"
+            d="M84 59 C85 61, 87 62, 89 63"
             fill="none" stroke="#c5c5c5" strokeWidth="0.6" strokeLinecap="round"
           />
-          {/* Cheekbone hint */}
-          <path
-            d="M84 56 C85 57, 86 58, 87 58"
-            fill="none" stroke="#d0d0d0" strokeWidth="0.5" strokeLinecap="round"
-          />
 
-          {/* Hair — back/top coverage, left side face exposed */}
-          {/* Main hair mass — covers top and right side */}
+          {/* Left ear (clearly visible, hair ends above it) */}
+          <ellipse cx="84.5" cy="55" rx="2.5" ry="3.5" fill="#d0d0d0" />
+          <ellipse cx="84.5" cy="55" rx="1.5" ry="2.5" fill="#c8c8c8" />
+          {/* Earlobe */}
+          <circle cx="84.5" cy="58" r="1" fill="#d0d0d0" />
+
+          {/* Hair — covers top & back, stops well above ear on left */}
+          {/* Main hair mass */}
           <path
-            d="M87 48 C86 42, 88 36, 96 34 C106 36, 110 42, 109 50
-               C109 56, 108 62, 106 66 C104 68, 100 70, 96 70
-               C94 70, 92 69, 90 67 C89 65, 88 60, 87 56 Z"
+            d="M88 46 C87 40, 89 34, 96 32 C106 34, 110 40, 109 48
+               C109 54, 108 58, 106 62 C104 64, 100 66, 96 66
+               C94 66, 92 65, 91 63 C90 61, 89 57, 88 52 Z"
             fill="#333"
           />
-          {/* Top crown — lighter brown/dark tone for male hair feel */}
+          {/* Top crown highlight */}
           <path
-            d="M89 38 C91 35, 95 33, 100 34 C105 35, 108 38, 109 42
-               C107 39, 103 36, 98 35 C94 35, 91 36, 89 38 Z"
+            d="M90 36 C92 33, 96 31, 100 32 C105 33, 108 36, 109 40
+               C107 37, 103 34, 98 33 C94 33, 91 34, 90 36 Z"
+            fill="#3a3a3a"
+          />
+          {/* Layer texture */}
+          <path d="M91 34 C93 32, 97 31, 101 32 C98 33, 94 33, 91 35 Z" fill="#444" />
+
+          {/* Right side layers (longer, away from viewer) */}
+          <path
+            d="M109 46 C110 52, 110 56, 109 61 C108 63, 107 65, 106 66
+               C107 64, 108 60, 108.5 54 C109 50, 109 48, 108.5 46 Z"
             fill="#3a3a3a"
           />
 
-          {/* Wolf cut layers — textured, shorter on top */}
-          <path d="M90 36 C92 34, 96 33, 100 34 C97 35, 93 35, 90 37 Z" fill="#444" />
-          {/* Right side layers (away from viewer, longer) */}
-          <path
-            d="M109 48 C110 54, 110 60, 109 65 C108 67, 107 69, 106 70
-               C107 68, 108 64, 108.5 58 C109 53, 109 50, 108.5 48 Z"
-            fill="#3a3a3a"
-          />
-          {/* Hair texture lines */}
-          <path d="M96 36 C96 42, 96 50, 96 58" fill="none" stroke="#3a3a3a" strokeWidth="0.5" />
-          <path d="M100 37 C101 43, 102 51, 102 59" fill="none" stroke="#3a3a3a" strokeWidth="0.4" />
+          {/* Hair texture lines on back */}
+          <path d="M96 34 C96 40, 96 48, 96 56" fill="none" stroke="#3a3a3a" strokeWidth="0.5" />
+          <path d="M100 35 C101 41, 102 49, 102 57" fill="none" stroke="#3a3a3a" strokeWidth="0.4" />
 
-          {/* Left side — hair stops above ear, revealing face */}
+          {/* Left side — hair ends above ear, clean cut */}
           <path
-            d="M87 48 C86 44, 87 40, 89 38
-               C88 42, 87 46, 87 50 C87 53, 87.5 56, 88 58
-               C87.5 56, 87 53, 87 50 Z"
+            d="M88 46 C87 42, 88 38, 90 36
+               C89 40, 88 44, 88 48 C88 50, 88 51, 88.5 52
+               C88 51, 88 49, 88 47 Z"
             fill="#3a3a3a"
           />
-          {/* Sideburn / short hair near left ear */}
+
+          {/* Short sideburn in front of ear */}
           <path
-            d="M87 54 C86.5 56, 86.5 58, 87 60 C87.5 58, 87.5 56, 87 54.5 Z"
+            d="M86 50 C85.5 52, 85.5 53.5, 86 54 C86.5 53, 86.5 52, 86 50.5 Z"
             fill="#444"
           />
 
-          {/* Nape wisps (wolf cut back) */}
-          <path d="M92 68 C91 71, 91 73, 92 73.5 C92.5 72, 92 70, 92 69 Z" fill="#333" />
-          <path d="M100 68 C101 71, 101 73, 100 73.5 C99.5 72, 100 70, 100 69 Z" fill="#333" />
-          <path d="M104 66 C105 69, 106 71, 105 72 C104 71, 104 69, 103.5 67 Z" fill="#333" />
-
-          {/* Left ear (visible since hair is short on this side) */}
-          <ellipse cx="86" cy="56" rx="2" ry="3" fill="#ccc" />
-          <ellipse cx="86" cy="56" rx="1.2" ry="2" fill="#c0c0c0" />
+          {/* Nape wisps */}
+          <path d="M93 64 C92 67, 92 68, 93 68.5 C93.5 67.5, 93 66, 93 65 Z" fill="#333" />
+          <path d="M100 64 C101 67, 101 68, 100 68.5 C99.5 67.5, 100 66, 100 65 Z" fill="#333" />
+          <path d="M104 62 C105 65, 106 67, 105 68 C104 67, 104 65, 103.5 63 Z" fill="#333" />
         </g>
 
         {/* === Arms & Hands === */}
