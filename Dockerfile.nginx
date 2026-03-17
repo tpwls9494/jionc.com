@@ -26,8 +26,8 @@ RUN npm install
 
 COPY frontend-blog/ ./
 
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+# Blog uses relative API path (same-origin via nginx proxy)
+ENV VITE_API_URL=""
 
 RUN npm run build
 
