@@ -129,11 +129,14 @@ export default function BlogDetail() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  // Fetch adjacent posts
+  // Fetch adjacent posts scoped to the first tag (category tab)
   useEffect(() => {
     if (!post) return
+    const firstTag = post.tags?.split(',')[0]?.trim() || null
+    const params = { page: 1, page_size: 100 }
+    if (firstTag) params.tag = firstTag
     blogAPI
-      .getPosts({ page: 1, page_size: 50 })
+      .getPosts(params)
       .then((res) => {
         const allPosts = res.data.items || []
         const currentIndex = allPosts.findIndex((p) => p.slug === slug)

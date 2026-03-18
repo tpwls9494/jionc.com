@@ -45,7 +45,7 @@ def get_drafts(
     db: Session = Depends(get_db),
 ):
     posts, total = crud_blog.get_blog_posts(
-        db, page=page, page_size=page_size, published_only=False
+        db, page=page, page_size=page_size, drafts_only=True
     )
     return BlogPostListResponse(
         items=[BlogPostListItem.model_validate(p) for p in posts],

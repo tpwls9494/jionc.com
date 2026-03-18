@@ -49,10 +49,13 @@ def get_blog_posts(
     search: Optional[str] = None,
     tag: Optional[str] = None,
     published_only: bool = True,
+    drafts_only: bool = False,
 ) -> tuple[List[BlogPost], int]:
     query = db.query(BlogPost)
 
-    if published_only:
+    if drafts_only:
+        query = query.filter(BlogPost.is_published == False)  # noqa: E712
+    elif published_only:
         query = query.filter(BlogPost.is_published == True)
 
     if search:
