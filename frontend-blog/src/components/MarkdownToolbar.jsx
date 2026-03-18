@@ -136,6 +136,72 @@ export default function MarkdownToolbar({ textareaRef, value, onChange, onImageU
 
   /* ── keyboard shortcuts ── */
   const handleKeyDown = (e) => {
+    const ta = getTextarea()
+
+    /* Enter inside a blockquote line → auto-continue the > prefix */
+    if (e.key === 'Enter' && !e.shiftKey && ta) {
+      const pos = ta.selectionStart
+      const lineStart = value.lastIndexOf('\n', pos - 1) + 1
+      const currentLine = value.slice(lineStart, pos)
+      const prefixMatch = currentLine.match(/^((?:>\s*)+)/)
+      if (prefixMatch) {
+        const prefix = prefixMatch[1]
+        /* If the line is ONLY the prefix (empty blockquote), clear it instead */
+        if (currentLine.trim() === prefix.trim()) {
+          e.preventDefault()
+          const next = value.slice(0, lineStart) + '\n' + value.slice(pos)
+          onChange(next)
+          requestAnimationFrame(() => {
+            ta.focus()
+            ta.setSelectionRange(lineStart + 1, lineStart + 1)
+          })
+          return
+        }
+        e.preventDefault()
+        const insert = '\n' + prefix
+        const next = value.slice(0, pos) + insert + value.slice(pos)
+        onChange(next)
+        requestAnimationFrame(() => {
+          ta.focus()
+          const cursor = pos + insert.length
+          ta.setSelectionRange(cursor, cursor)
+        })
+        return
+      }
+    }
+
+    /* Tab inside a blockquote line → increase nesting level */
+    if (e.key === 'Tab' && ta) {
+      const pos = ta.selectionStart
+      const lineStart = value.lastIndexOf('\n', pos - 1) + 1
+      const currentLine = value.slice(lineStart, pos)
+      const prefixMatch = currentLine.match(/^((?:>\s*)+)/)
+      if (prefixMatch) {
+        e.preventDefault()
+        if (e.shiftKey) {
+          /* Shift+Tab → decrease nesting (remove one >) */
+          const newLine = currentLine.replace(/^>\s?/, '')
+          const next = value.slice(0, lineStart) + newLine + value.slice(pos)
+          onChange(next)
+          const diff = currentLine.length - newLine.length
+          requestAnimationFrame(() => {
+            ta.focus()
+            ta.setSelectionRange(pos - diff, pos - diff)
+          })
+        } else {
+          /* Tab → increase nesting (add >) */
+          const insert = '> '
+          const next = value.slice(0, lineStart) + insert + value.slice(lineStart)
+          onChange(next)
+          requestAnimationFrame(() => {
+            ta.focus()
+            ta.setSelectionRange(pos + insert.length, pos + insert.length)
+          })
+        }
+        return
+      }
+    }
+
     const mod = e.ctrlKey || e.metaKey
     if (!mod) return
 

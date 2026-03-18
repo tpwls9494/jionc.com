@@ -179,6 +179,10 @@
     @apply my-3 border-l-4 border-ink-300 pl-3 py-1 text-ink-600 italic rounded-r-md bg-paper-100/50;
   }
 
+  .rich-editor blockquote blockquote {
+    @apply my-1 border-ink-400 bg-paper-200/50;
+  }
+
   .rich-editor pre {
     @apply my-3 rounded-lg border border-ink-200 bg-paper-100 p-3 overflow-x-auto text-sm font-mono text-ink-800;
   }

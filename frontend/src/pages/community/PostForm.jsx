@@ -1054,6 +1054,64 @@ function PostForm() {
       }
     }
 
+    /* Tab / Shift+Tab inside a blockquote → nest / un-nest */
+    if (event.key === 'Tab') {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        let node = selection.getRangeAt(0).startContainer
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+        const bq = node?.closest?.('blockquote')
+        if (bq && editorRef.current?.contains(bq)) {
+          event.preventDefault()
+          if (event.shiftKey) {
+            /* Un-nest: unwrap one blockquote level */
+            const parent = bq.parentElement
+            if (parent?.tagName?.toLowerCase() === 'blockquote') {
+              while (bq.firstChild) parent.insertBefore(bq.firstChild, bq)
+              bq.remove()
+            }
+          } else {
+            /* Nest: wrap in a new blockquote */
+            const inner = document.createElement('blockquote')
+            bq.parentNode.insertBefore(inner, bq)
+            inner.appendChild(bq)
+          }
+          syncEditorSnapshots()
+          return
+        }
+      }
+    }
+
+    /* Enter inside blockquote → let browser handle, but double-Enter exits */
+    if (event.key === 'Enter' && !event.shiftKey) {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        let node = selection.getRangeAt(0).startContainer
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+        const bq = node?.closest?.('blockquote')
+        if (bq && editorRef.current?.contains(bq)) {
+          /* If the current block inside the blockquote is empty, exit the blockquote */
+          const block = node?.closest?.('p, div, li') || node
+          if (block && bq.contains(block) && !block.textContent?.trim()) {
+            event.preventDefault()
+            const p = document.createElement('p')
+            p.innerHTML = '<br>'
+            bq.parentNode.insertBefore(p, bq.nextSibling)
+            block.remove()
+            /* Clean up empty blockquote */
+            if (!bq.textContent?.trim() && !bq.querySelector('img')) bq.remove()
+            const range = document.createRange()
+            range.setStart(p, 0)
+            range.collapse(true)
+            selection.removeAllRanges()
+            selection.addRange(range)
+            syncEditorSnapshots()
+            return
+          }
+        }
+      }
+    }
+
     if (event.key !== 'Backspace' && event.key !== 'Delete') return
 
     const editor = editorRef.current
