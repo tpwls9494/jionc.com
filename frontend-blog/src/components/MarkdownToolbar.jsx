@@ -173,58 +173,55 @@ export default function MarkdownToolbar({ textareaRef, value, onChange, onImageU
       }
     }
 
-    /* Tab → indent / Shift+Tab → outdent */
+    /* Tab → indent / Shift+Tab → outdent (supports multi-line selection) */
     if (e.key === 'Tab' && ta) {
       e.preventDefault()
       const pos = ta.selectionStart
       const end = ta.selectionEnd
-      const lineStart = value.lastIndexOf('\n', pos - 1) + 1
-      const currentLine = value.slice(lineStart, end)
-      const isBlockquote = /^((?:>\s*)+)/.test(currentLine)
+      const blockStart = value.lastIndexOf('\n', pos - 1) + 1
+      const blockEnd = value.indexOf('\n', end)
+      const actualEnd = blockEnd === -1 ? value.length : blockEnd
+      const block = value.slice(blockStart, actualEnd)
+      const lines = block.split('\n')
 
-      if (isBlockquote) {
+      let totalDeltaStart = 0
+      let totalDeltaEnd = 0
+      const newLines = lines.map((line, i) => {
+        const isQuote = /^>\s?/.test(line)
+        let newLine
+        let delta
+
         if (e.shiftKey) {
-          /* Shift+Tab in blockquote → decrease nesting (remove one >) */
-          const newLine = currentLine.replace(/^>\s?/, '')
-          const next = value.slice(0, lineStart) + newLine + value.slice(end)
-          onChange(next)
-          const diff = currentLine.length - newLine.length
-          requestAnimationFrame(() => {
-            ta.focus()
-            ta.setSelectionRange(pos - diff, pos - diff)
-          })
+          if (isQuote) {
+            newLine = line.replace(/^>\s?/, '')
+          } else {
+            newLine = line.replace(/^  /, '')
+          }
+          delta = newLine.length - line.length
         } else {
-          /* Tab in blockquote → increase nesting (add >) */
-          const insert = '> '
-          const next = value.slice(0, lineStart) + insert + value.slice(lineStart)
-          onChange(next)
-          requestAnimationFrame(() => {
-            ta.focus()
-            ta.setSelectionRange(pos + insert.length, end + insert.length)
-          })
+          if (isQuote) {
+            newLine = '> ' + line
+          } else {
+            newLine = '  ' + line
+          }
+          delta = newLine.length - line.length
         }
-      } else if (e.shiftKey) {
-        /* Shift+Tab on normal line → remove leading spaces (up to 2) */
-        const removed = currentLine.replace(/^  /, '')
-        const diff = currentLine.length - removed.length
-        if (diff > 0) {
-          const next = value.slice(0, lineStart) + removed + value.slice(end)
-          onChange(next)
-          requestAnimationFrame(() => {
-            ta.focus()
-            ta.setSelectionRange(Math.max(lineStart, pos - diff), Math.max(lineStart, end - diff))
-          })
-        }
-      } else {
-        /* Tab on normal line → insert 2 spaces at cursor */
-        const insert = '  '
-        const next = value.slice(0, pos) + insert + value.slice(pos)
-        onChange(next)
-        requestAnimationFrame(() => {
-          ta.focus()
-          ta.setSelectionRange(pos + insert.length, pos + insert.length)
-        })
-      }
+
+        if (i === 0) totalDeltaStart = delta
+        totalDeltaEnd += delta
+        return newLine
+      })
+
+      const result = newLines.join('\n')
+      const next = value.slice(0, blockStart) + result + value.slice(actualEnd)
+      onChange(next)
+
+      const newPos = Math.max(blockStart, pos + totalDeltaStart)
+      const newEnd = Math.max(blockStart, end + totalDeltaEnd)
+      requestAnimationFrame(() => {
+        ta.focus()
+        ta.setSelectionRange(newPos, newEnd)
+      })
       return
     }
 
