@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -99,6 +99,8 @@ function HeadingRenderer({ level, children }) {
 export default function BlogDetail() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const categoryFromList = searchParams.get('cat') || null
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -129,12 +131,11 @@ export default function BlogDetail() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  // Fetch adjacent posts scoped to the first tag (category tab)
+  // Fetch adjacent posts — scoped to category tab if navigated from list, otherwise all posts
   useEffect(() => {
     if (!post) return
-    const firstTag = post.tags?.split(',')[0]?.trim() || null
     const params = { page: 1, page_size: 100 }
-    if (firstTag) params.tag = firstTag
+    if (categoryFromList) params.tag = categoryFromList
     blogAPI
       .getPosts(params)
       .then((res) => {
@@ -147,7 +148,7 @@ export default function BlogDetail() {
         })
       })
       .catch(() => {})
-  }, [post, slug])
+  }, [post, slug, categoryFromList])
 
   const headings = useTableOfContents(post?.content)
   const activeHeadingId = useActiveHeading(headings)
@@ -267,7 +268,7 @@ export default function BlogDetail() {
         <div className="mt-16 pt-8 border-t border-ink-100">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {adjacentPosts.prev ? (
-              <Link to={`/${adjacentPosts.prev.slug}`} className="post-nav-card group">
+              <Link to={`/${adjacentPosts.prev.slug}${categoryFromList ? `?cat=${categoryFromList}` : ''}`} className="post-nav-card group">
                 <svg className="w-4 h-4 text-ink-300 shrink-0 group-hover:text-ink-500 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
@@ -280,7 +281,7 @@ export default function BlogDetail() {
               <div />
             )}
             {adjacentPosts.next ? (
-              <Link to={`/${adjacentPosts.next.slug}`} className="post-nav-card group justify-end text-right">
+              <Link to={`/${adjacentPosts.next.slug}${categoryFromList ? `?cat=${categoryFromList}` : ''}`} className="post-nav-card group justify-end text-right">
                 <div className="min-w-0">
                   <p className="post-nav-label">다음 글</p>
                   <p className="post-nav-title">{adjacentPosts.next.title}</p>
@@ -295,7 +296,7 @@ export default function BlogDetail() {
           </div>
 
           <div className="mt-6 text-center">
-            <Link to="/" className="inline-flex items-center gap-2 text-sm text-ink-400 hover:text-ink-700 no-underline transition-colors">
+            <Link to={categoryFromList ? `/?category=${categoryFromList}` : '/'} className="inline-flex items-center gap-2 text-sm text-ink-400 hover:text-ink-700 no-underline transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
               </svg>

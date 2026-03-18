@@ -76,7 +76,7 @@ export default function BlogList() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
           {posts.map((post) => (
             <article key={post.id} className="blog-card group">
-              <Link to={`/${post.slug}`} className="block no-underline">
+              <Link to={`/${post.slug}${category !== 'all' ? `?cat=${category}` : ''}`} className="block no-underline">
                 <div className="aspect-[16/9] overflow-hidden relative">
                   {post.thumbnail_url ? (
                     <img
