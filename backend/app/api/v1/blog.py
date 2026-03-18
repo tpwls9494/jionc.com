@@ -1,6 +1,10 @@
+import logging
+import os
+import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File as FastAPIFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_admin, get_current_user_optional
@@ -16,6 +20,13 @@ from app.schemas.blog_post import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+BLOG_UPLOAD_DIR = "/app/uploads/blog"
+os.makedirs(BLOG_UPLOAD_DIR, exist_ok=True)
+
+BLOG_MAX_FILE_SIZE = 10 * 1024 * 1024
+BLOG_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 
 @router.get("/", response_model=BlogPostListResponse)
@@ -53,6 +64,18 @@ def get_drafts(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get("/images/{filename}")
+async def serve_blog_image(filename: str):
+    """Serve an uploaded blog image."""
+    safe_filename = os.path.basename(filename)
+    file_path = os.path.join(BLOG_UPLOAD_DIR, safe_filename)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return FileResponse(file_path)
 
 
 @router.get("/{slug}", response_model=BlogPostResponse)
@@ -105,3 +128,41 @@ def delete_blog_post(
 ):
     if not crud_blog.delete_blog_post(db, post_id):
         raise HTTPException(status_code=404, detail="Blog post not found")
+
+
+@router.post("/upload-image")
+async def upload_blog_image(
+    file: UploadFile = FastAPIFile(...),
+    current_user: User = Depends(get_current_active_admin),
+):
+    """Upload an image for blog content or thumbnail. Returns the image URL."""
+    if file.content_type not in BLOG_ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type {file.content_type} is not allowed. Only images are accepted.",
+        )
+
+    content = await file.read()
+    if len(content) > BLOG_MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds maximum of 10MB",
+        )
+
+    file_extension = os.path.splitext(file.filename or "image.jpg")[1].lower()
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(BLOG_UPLOAD_DIR, unique_filename)
+
+    try:
+        with open(file_path, "wb") as f:
+            f.write(content)
+    except Exception:
+        logger.exception("Blog image write failed for user_id=%s", current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save image",
+        )
+
+    return {"url": f"/api/v1/blog/images/{unique_filename}", "filename": unique_filename}
+
+

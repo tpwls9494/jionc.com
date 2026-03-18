@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -9,12 +9,15 @@ import MarkdownToolbar from '../components/MarkdownToolbar'
 import MermaidBlock from '../components/MermaidBlock'
 
 const TAG_OPTIONS = CATEGORIES.filter((c) => c.key !== 'all')
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export default function BlogEditor() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const isEdit = Boolean(slug)
   const textareaRef = useRef(null)
+  const thumbnailInputRef = useRef(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -29,6 +32,8 @@ export default function BlogEditor() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState('write')
+  const [uploading, setUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   useEffect(() => {
     if (!isEdit) return
@@ -94,10 +99,97 @@ export default function BlogEditor() {
     }
   }
 
+  /* ── Image upload helper ── */
+  const uploadAndInsertImage = useCallback(async (file) => {
+    if (!IMAGE_MIME_TYPES.has(file.type)) {
+      setError('이미지 파일만 업로드할 수 있습니다. (jpg, png, gif, webp)')
+      return null
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('파일 크기가 10MB를 초과합니다.')
+      return null
+    }
+
+    setUploading(true)
+    setError(null)
+    try {
+      const res = await blogAPI.uploadImage(file)
+      return res.data.url
+    } catch (err) {
+      setError(err.response?.data?.detail || '이미지 업로드에 실패했습니다.')
+      return null
+    } finally {
+      setUploading(false)
+    }
+  }, [])
+
+  const insertImageMarkdown = useCallback((url, alt = '이미지') => {
+    const ta = textareaRef.current
+    if (!ta) return
+    const start = ta.selectionStart
+    const markdown = `![${alt}](${url})`
+    const prefix = start > 0 && form.content[start - 1] !== '\n' ? '\n' : ''
+    const next = form.content.slice(0, start) + prefix + markdown + '\n' + form.content.slice(start)
+    setForm((prev) => ({ ...prev, content: next }))
+    requestAnimationFrame(() => {
+      ta.focus()
+      const cursor = start + prefix.length + markdown.length + 1
+      ta.setSelectionRange(cursor, cursor)
+    })
+  }, [form.content])
+
+  const handleImageFiles = useCallback(async (files) => {
+    for (const file of files) {
+      const url = await uploadAndInsertImage(file)
+      if (url) insertImageMarkdown(url, file.name.replace(/\.[^.]+$/, ''))
+    }
+  }, [uploadAndInsertImage, insertImageMarkdown])
+
+  /* ── Drag & drop on textarea ── */
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = () => setIsDragOver(false)
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const files = Array.from(e.dataTransfer?.files || []).filter((f) =>
+      IMAGE_MIME_TYPES.has(f.type),
+    )
+    if (files.length > 0) handleImageFiles(files)
+  }
+
+  /* ── Paste image ── */
+  const handlePaste = (e) => {
+    const items = Array.from(e.clipboardData?.items || [])
+    const imageFiles = items
+      .filter((item) => item.kind === 'file' && IMAGE_MIME_TYPES.has(item.type))
+      .map((item) => item.getAsFile())
+      .filter(Boolean)
+    if (imageFiles.length > 0) {
+      e.preventDefault()
+      handleImageFiles(imageFiles)
+    }
+  }
+
+  /* ── Thumbnail upload ── */
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    const url = await uploadAndInsertImage(file)
+    if (url) setForm((prev) => ({ ...prev, thumbnail_url: url }))
+  }
+
+  /* ── Toolbar (image button triggers file upload) ── */
   const { toolbar, keyDownHandler } = MarkdownToolbar({
     textareaRef,
     value: form.content,
     onChange: (next) => setForm((prev) => ({ ...prev, content: next })),
+    onImageUpload: handleImageFiles,
   })
 
   if (loading) {
@@ -148,19 +240,35 @@ export default function BlogEditor() {
 
         <div>
           <label className="block text-sm font-medium text-ink-700 mb-1">
-            썸네일 URL
+            썸네일
           </label>
           <p className="text-xs text-ink-400 mb-1.5">
-            블로그 목록에서 카드 이미지로 표시됩니다. 비워두면 글 제목 첫
-            글자로 대체됩니다.
+            이미지를 업로드하거나 URL을 직접 입력할 수 있습니다.
           </p>
-          <input
-            name="thumbnail_url"
-            value={form.thumbnail_url}
-            onChange={handleChange}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-3 py-2 border border-ink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              name="thumbnail_url"
+              value={form.thumbnail_url}
+              onChange={handleChange}
+              placeholder="https://example.com/image.jpg"
+              className="flex-1 px-3 py-2 border border-ink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => thumbnailInputRef.current?.click()}
+              disabled={uploading}
+              className="px-3 py-2 border border-ink-200 text-ink-600 rounded-lg text-sm hover:bg-paper-100 disabled:opacity-50 shrink-0"
+            >
+              {uploading ? '업로드 중...' : '이미지 업로드'}
+            </button>
+            <input
+              ref={thumbnailInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleThumbnailUpload}
+            />
+          </div>
           {form.thumbnail_url && (
             <img
               src={form.thumbnail_url}
@@ -227,16 +335,40 @@ export default function BlogEditor() {
           {viewMode === 'write' ? (
             <div>
               {toolbar}
-              <textarea
-                ref={textareaRef}
-                name="content"
-                value={form.content}
-                onChange={handleChange}
-                onKeyDown={keyDownHandler}
-                required
-                rows={20}
-                className="w-full px-3 py-2 border border-ink-100 rounded-b-lg rounded-t-none border-t-0 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-y"
-              />
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  name="content"
+                  value={form.content}
+                  onChange={handleChange}
+                  onKeyDown={keyDownHandler}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onPaste={handlePaste}
+                  required
+                  rows={20}
+                  className={`w-full px-3 py-2 border rounded-b-lg rounded-t-none border-t-0 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-y transition-colors ${
+                    isDragOver
+                      ? 'border-blue-400 bg-blue-50/50'
+                      : 'border-ink-100'
+                  }`}
+                />
+                {isDragOver && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-b-lg bg-blue-50/80 border-2 border-dashed border-blue-400 pointer-events-none">
+                    <p className="text-sm font-medium text-blue-600">이미지를 여기에 놓으세요</p>
+                  </div>
+                )}
+                {uploading && (
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 bg-ink-800 text-white text-xs rounded-md">
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    업로드 중...
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-ink-400">
+                이미지를 드래그&드롭하거나 붙여넣기(Ctrl+V)로 삽입할 수 있습니다.
+              </p>
             </div>
           ) : (
             <div className="min-h-[480px] px-4 py-3 border border-ink-100 rounded-lg bg-white overflow-y-auto">
@@ -285,7 +417,7 @@ export default function BlogEditor() {
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploading}
             className="px-5 py-2 bg-ink-800 text-white rounded-lg text-sm hover:bg-ink-900 disabled:opacity-50"
           >
             {saving ? '저장 중...' : isEdit ? '수정' : '발행'}

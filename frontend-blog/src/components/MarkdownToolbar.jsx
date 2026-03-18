@@ -1,12 +1,17 @@
+import { useRef } from 'react'
+
 /**
  * Textarea-based markdown formatting toolbar.
  *
  * Props:
- *  - textareaRef : React ref to the <textarea>
- *  - value       : current textarea value (string)
- *  - onChange     : (nextValue: string) => void
+ *  - textareaRef    : React ref to the <textarea>
+ *  - value          : current textarea value (string)
+ *  - onChange        : (nextValue: string) => void
+ *  - onImageUpload? : (files: File[]) => void  — called when user picks image files
  */
-export default function MarkdownToolbar({ textareaRef, value, onChange }) {
+export default function MarkdownToolbar({ textareaRef, value, onChange, onImageUpload }) {
+  const imageInputRef = useRef(null)
+
   /* ── helpers ── */
   const getTextarea = () => textareaRef?.current
   const focus = () => getTextarea()?.focus()
@@ -109,7 +114,19 @@ export default function MarkdownToolbar({ textareaRef, value, onChange }) {
     }
   }
 
-  const handleImage = () => replaceSelection('![', '](URL)', '이미지 설명')
+  const handleImage = () => {
+    if (onImageUpload) {
+      imageInputRef.current?.click()
+    } else {
+      replaceSelection('![', '](URL)', '이미지 설명')
+    }
+  }
+
+  const handleImageFileChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0 && onImageUpload) onImageUpload(files)
+    e.target.value = ''
+  }
 
   const handleTable = () =>
     insertBlock('| 헤더1 | 헤더2 | 헤더3 |\n|-------|-------|-------|\n| 내용1 | 내용2 | 내용3 |')
@@ -202,9 +219,19 @@ export default function MarkdownToolbar({ textareaRef, value, onChange }) {
         <button type="button" onClick={handleLink} className={btn} title="링크 (Ctrl+K)">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
         </button>
-        <button type="button" onClick={handleImage} className={btn} title="이미지">
+        <button type="button" onClick={handleImage} className={btn} title="이미지 업로드">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </button>
+        {onImageUpload && (
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleImageFileChange}
+          />
+        )}
       </div>
     ),
   }

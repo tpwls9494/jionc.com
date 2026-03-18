@@ -21,6 +21,13 @@ export const blogAPI = {
   create: (data) => api.post('/blog/', data),
   update: (id, data) => api.put(`/blog/${id}`, data),
   delete: (id) => api.delete(`/blog/${id}`),
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/blog/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export const authAPI = {
