@@ -134,7 +134,7 @@ export default function BlogDetail() {
   // Fetch adjacent posts — scoped to category tab if navigated from list, otherwise all posts
   useEffect(() => {
     if (!post) return
-    const params = { page: 1, page_size: 100 }
+    const params = { page: 1, page_size: 50 }
     if (categoryFromList) params.tag = categoryFromList
     blogAPI
       .getPosts(params)
