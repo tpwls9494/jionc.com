@@ -42,6 +42,7 @@ body {
   margin-bottom: 0.6em;
   letter-spacing: -0.02em;
   line-height: 1.35;
+  scroll-margin-top: 5rem;
 }
 
 .prose h1 { font-size: 2rem; }
@@ -348,6 +349,8 @@ body {
 .toc {
   position: sticky;
   top: 5rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
 }
 
 .toc-title {
