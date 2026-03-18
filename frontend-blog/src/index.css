@@ -463,6 +463,12 @@ body {
   transform: scale(1.05);
 }
 
+@media (max-width: 1024px) {
+  .working-person {
+    display: none;
+  }
+}
+
 /* Typing — natural staggered rhythm */
 .fingers-far {
   animation: tap-a 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -556,13 +562,3 @@ body {
   }
 }
 
-/* Smaller on mobile */
-@media (max-width: 768px) {
-  .working-person {
-    width: 80px;
-    height: 72px;
-    bottom: 8px;
-    left: 8px;
-    opacity: 0.3;
-  }
-}
