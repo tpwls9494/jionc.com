@@ -127,6 +127,10 @@ def robots_txt(request: Request) -> Response:
             "User-agent: *",
             "Allow: /",
             "Disallow: /api/",
+            # The SPA renders from these public APIs; crawlers must fetch them to see content.
+            "Allow: /api/v1/signals/",
+            "Allow: /api/v1/community/",
+            "Allow: /api/v1/seo/",
             "Disallow: /docs",
             "Disallow: /review",
             "Disallow: /submit",

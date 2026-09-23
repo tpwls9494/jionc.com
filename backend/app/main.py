@@ -63,6 +63,13 @@ async def request_metrics_middleware(request: Request, call_next):
 
     duration_ms = (time.perf_counter() - start) * 1000
     response.headers["X-Process-Time-Ms"] = f"{duration_ms:.2f}"
+    # robots.txt lets crawlers fetch public APIs for rendering; keep the JSON itself out of search.
+    if (
+        request.url.path.startswith("/api/")
+        and response.headers.get("content-type", "").startswith("application/json")
+        and "x-robots-tag" not in response.headers
+    ):
+        response.headers["X-Robots-Tag"] = "noindex"
     if getattr(request.state, 'auth_degraded', False):
         response.headers['Cache-Control'] = 'no-store'
 
